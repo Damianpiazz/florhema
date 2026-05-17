@@ -1,0 +1,35 @@
+services:
+  florhema-postgres:
+    image: postgres:16
+    container_name: florhema-postgres
+    restart: always
+
+    environment:
+      POSTGRES_DB: florhema_db
+      POSTGRES_USER: florhema_user
+      POSTGRES_PASSWORD: florhema_pass
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - florhema_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U florhema_user -d florhema_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    # RESOURCE LIMITS
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"     # maximo 50% de 1 CPU
+          memory: 512M     # maximo 512 MB RAM
+        reservations:
+          cpus: "0.25"     # minimo garantizado
+          memory: 256M
+
+volumes:
+  florhema_postgres_data:
