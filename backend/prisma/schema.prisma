@@ -6,3 +6,444 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// =========================
+// USER & AUTH
+// =========================
+
+enum Role {
+  ADMIN
+  USER
+  INVITADO
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  role     Role    @default(USER)
+  name     String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById Int?
+  createdBy   User? @relation("UserCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("UserUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("UserDeletedBy", fields: [deletedById], references: [id])
+
+  createdByUsers User[] @relation("UserCreatedBy")
+  updatedByUsers User[] @relation("UserUpdatedBy")
+  deletedByUsers User[] @relation("UserDeletedBy")
+
+  // Created relations
+  createdGruposSanguineos                GrupoSanguineo[]              @relation("GrupoSanguineoCreatedBy")
+  createdResultadosSerologia             ResultadoSerologia[]          @relation("ResultadoSerologiaCreatedBy")
+  createdResultadosCoombs                ResultadoCoombs[]             @relation("ResultadoCoombsCreatedBy")
+  createdCompatibilidadesTransfusionales CompatibilidadTransfusional[] @relation("CompatibilidadTransfusionalCreatedBy")
+  createdPersonas                        Persona[]                     @relation("PersonaCreatedBy")
+  createdDonantes                        Donante[]                     @relation("DonanteCreatedBy")
+  createdDonaciones                      Donacion[]                    @relation("DonacionCreatedBy")
+  createdPacientes                       Paciente[]                    @relation("PacienteCreatedBy")
+  createdTransfusiones                   Transfusion[]                 @relation("TransfusionCreatedBy")
+  createdGestantes                       Gestante[]                    @relation("GestanteCreatedBy")
+  createdEstudiosGestante                EstudioGestante[]             @relation("EstudioGestanteCreatedBy")
+  createdRecienNacidos                   RecienNacido[]                @relation("RecienNacidoCreatedBy")
+
+  // Updated relations
+  updatedGruposSanguineos                GrupoSanguineo[]              @relation("GrupoSanguineoUpdatedBy")
+  updatedResultadosSerologia             ResultadoSerologia[]          @relation("ResultadoSerologiaUpdatedBy")
+  updatedResultadosCoombs                ResultadoCoombs[]             @relation("ResultadoCoombsUpdatedBy")
+  updatedCompatibilidadesTransfusionales CompatibilidadTransfusional[] @relation("CompatibilidadTransfusionalUpdatedBy")
+  updatedPersonas                        Persona[]                     @relation("PersonaUpdatedBy")
+  updatedDonantes                        Donante[]                     @relation("DonanteUpdatedBy")
+  updatedDonaciones                      Donacion[]                    @relation("DonacionUpdatedBy")
+  updatedPacientes                       Paciente[]                    @relation("PacienteUpdatedBy")
+  updatedTransfusiones                   Transfusion[]                 @relation("TransfusionUpdatedBy")
+  updatedGestantes                       Gestante[]                    @relation("GestanteUpdatedBy")
+  updatedEstudiosGestante                EstudioGestante[]             @relation("EstudioGestanteUpdatedBy")
+  updatedRecienNacidos                   RecienNacido[]                @relation("RecienNacidoUpdatedBy")
+
+  // Deleted relations
+  deletedGruposSanguineos                GrupoSanguineo[]              @relation("GrupoSanguineoDeletedBy")
+  deletedResultadosSerologia             ResultadoSerologia[]          @relation("ResultadoSerologiaDeletedBy")
+  deletedResultadosCoombs                ResultadoCoombs[]             @relation("ResultadoCoombsDeletedBy")
+  deletedCompatibilidadesTransfusionales CompatibilidadTransfusional[] @relation("CompatibilidadTransfusionalDeletedBy")
+  deletedPersonas                        Persona[]                     @relation("PersonaDeletedBy")
+  deletedDonantes                        Donante[]                     @relation("DonanteDeletedBy")
+  deletedDonaciones                      Donacion[]                    @relation("DonacionDeletedBy")
+  deletedPacientes                       Paciente[]                    @relation("PacienteDeletedBy")
+  deletedTransfusiones                   Transfusion[]                 @relation("TransfusionDeletedBy")
+  deletedGestantes                       Gestante[]                    @relation("GestanteDeletedBy")
+  deletedEstudiosGestante                EstudioGestante[]             @relation("EstudioGestanteDeletedBy")
+  deletedRecienNacidos                   RecienNacido[]                @relation("RecienNacidoDeletedBy")
+
+  sessions  Session[]
+  auditLogs AuditLog[]
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  Int
+  oldValues Json?
+  newValues Json?
+  createdAt DateTime @default(now())
+}
+
+// =========================
+// VALUE OBJECTS
+// =========================
+
+model GrupoSanguineo {
+  id       Int      @id @default(autoincrement())
+  tipo     TipoABO
+  factorRh FactorRh
+
+  personas                 Persona[]
+  donantesCompatibilidad   CompatibilidadTransfusional[] @relation("DonanteGrupo")
+  receptoresCompatibilidad CompatibilidadTransfusional[] @relation("ReceptorGrupo")
+
+  createdById Int?
+  createdBy   User? @relation("GrupoSanguineoCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("GrupoSanguineoUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("GrupoSanguineoDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([tipo, factorRh])
+}
+
+model ResultadoSerologia {
+  id      Int     @id @default(autoincrement())
+  hiv     Boolean @default(false)
+  hcv     Boolean @default(false)
+  hbv     Boolean @default(false)
+  chagas  Boolean @default(false)
+  sifilis Boolean @default(false)
+
+  donacionId Int      @unique
+  donacion   Donacion @relation(fields: [donacionId], references: [id])
+
+  createdById Int?
+  createdBy   User? @relation("ResultadoSerologiaCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("ResultadoSerologiaUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("ResultadoSerologiaDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model ResultadoCoombs {
+  id       Int        @id @default(autoincrement())
+  tipo     TipoCoombs
+  positivo Boolean
+
+  transfusion     Transfusion?
+  estudioGestante EstudioGestante?
+  recienNacido    RecienNacido?
+
+  createdById Int?
+  createdBy   User? @relation("ResultadoCoombsCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("ResultadoCoombsUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("ResultadoCoombsDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model CompatibilidadTransfusional {
+  id                     Int     @id @default(autoincrement())
+  compatible             Boolean
+  motivoIncompatibilidad String?
+
+  donanteGrupoId  Int
+  donanteGrupo    GrupoSanguineo @relation("DonanteGrupo", fields: [donanteGrupoId], references: [id])
+  receptorGrupoId Int
+  receptorGrupo   GrupoSanguineo @relation("ReceptorGrupo", fields: [receptorGrupoId], references: [id])
+
+  transfusion Transfusion?
+
+  createdById Int?
+  createdBy   User? @relation("CompatibilidadTransfusionalCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("CompatibilidadTransfusionalUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("CompatibilidadTransfusionalDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// =========================
+// PERSONAS
+// =========================
+
+model Persona {
+  id               Int            @id @default(autoincrement())
+  dni              String         @unique
+  nombre           String
+  apellido         String
+  fechaNacimiento  DateTime
+  direccion        String
+  telefono         String
+  grupoSanguineoId Int
+  grupoSanguineo   GrupoSanguineo @relation(fields: [grupoSanguineoId], references: [id])
+
+  donante      Donante?
+  paciente     Paciente?
+  gestante     Gestante?
+  recienNacido RecienNacido?
+
+  createdById Int?
+  createdBy   User? @relation("PersonaCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("PersonaUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("PersonaDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// =========================
+// DONANTE
+// =========================
+
+model Donante {
+  id              Int           @id @default(autoincrement())
+  personaId       Int           @unique
+  persona         Persona       @relation(fields: [personaId], references: [id])
+  semaforoAptitud EstadoAptitud @default(VERDE)
+  donaciones      Donacion[]
+
+  createdById Int?
+  createdBy   User? @relation("DonanteCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("DonanteUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("DonanteDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Donacion {
+  id              Int          @id @default(autoincrement())
+  donanteId       Int
+  donante         Donante      @relation(fields: [donanteId], references: [id])
+  fecha           DateTime
+  peso            Float
+  tensionArterial String
+  hemoglobina     Float
+  reaccionAdversa String?
+  tipoDonacion    TipoDonacion
+
+  resultadoSerologia ResultadoSerologia?
+
+  createdById Int?
+  createdBy   User? @relation("DonacionCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("DonacionUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("DonacionDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+enum EstadoAptitud {
+  VERDE
+  AMARILLO
+  ROJO
+}
+
+enum TipoDonacion {
+  VOLUNTARIA
+  REPOSICION
+}
+
+// =========================
+// PACIENTE
+// =========================
+
+model Paciente {
+  id            Int           @id @default(autoincrement())
+  personaId     Int           @unique
+  persona       Persona       @relation(fields: [personaId], references: [id])
+  transfusiones Transfusion[]
+
+  createdById Int?
+  createdBy   User? @relation("PacienteCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("PacienteUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("PacienteDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Transfusion {
+  id               Int                @id @default(autoincrement())
+  pacienteId       Int
+  paciente         Paciente           @relation(fields: [pacienteId], references: [id])
+  fecha            DateTime
+  componente       TipoHemocomponente
+  cantidadUnidades Int
+  reaccionAdversa  String?
+
+  compatibilidadId Int?                         @unique
+  compatibilidad   CompatibilidadTransfusional? @relation(fields: [compatibilidadId], references: [id])
+
+  resultadoCoombsId Int?             @unique
+  resultadoCoombs   ResultadoCoombs? @relation(fields: [resultadoCoombsId], references: [id])
+
+  createdById Int?
+  createdBy   User? @relation("TransfusionCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("TransfusionUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("TransfusionDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+enum TipoHemocomponente {
+  GLOBULOS_ROJOS
+  PLASMA
+  PLAQUETAS
+  CRIOPRECIPITADO
+}
+
+// =========================
+// GESTANTE
+// =========================
+
+model Gestante {
+  id                      Int               @id @default(autoincrement())
+  personaId               Int               @unique
+  persona                 Persona           @relation(fields: [personaId], references: [id])
+  antecedentesObstetricos String?
+  estudios                EstudioGestante[]
+  recienNacidos           RecienNacido[]
+
+  createdById Int?
+  createdBy   User? @relation("GestanteCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("GestanteUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("GestanteDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model EstudioGestante {
+  id                     Int           @id @default(autoincrement())
+  gestanteId             Int
+  gestante               Gestante      @relation(fields: [gestanteId], references: [id])
+  fecha                  DateTime
+  compatibilidadConyugal String?
+  estadoEstudio          EstadoEstudio @default(PENDIENTE)
+
+  pruebaCoombsIndirectaId Int             @unique
+  pruebaCoombsIndirecta   ResultadoCoombs @relation(fields: [pruebaCoombsIndirectaId], references: [id])
+
+  createdById Int?
+  createdBy   User? @relation("EstudioGestanteCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("EstudioGestanteUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("EstudioGestanteDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+enum EstadoEstudio {
+  PENDIENTE
+  FINALIZADO
+}
+
+// =========================
+// RECIEN NACIDO
+// =========================
+
+model RecienNacido {
+  id         Int      @id @default(autoincrement())
+  personaId  Int      @unique
+  persona    Persona  @relation(fields: [personaId], references: [id])
+  gestanteId Int
+  gestante   Gestante @relation(fields: [gestanteId], references: [id])
+
+  pruebaCoombsDirectaId Int             @unique
+  pruebaCoombsDirecta   ResultadoCoombs @relation(fields: [pruebaCoombsDirectaId], references: [id])
+
+  createdById Int?
+  createdBy   User? @relation("RecienNacidoCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy   User? @relation("RecienNacidoUpdatedBy", fields: [updatedById], references: [id])
+  deletedById Int?
+  deletedBy   User? @relation("RecienNacidoDeletedBy", fields: [deletedById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// =========================
+// ENUMERACIONES COMPARTIDAS
+// =========================
+
+enum TipoABO {
+  A
+  B
+  AB
+  O
+}
+
+enum FactorRh {
+  POSITIVO
+  NEGATIVO
+}
+
+enum TipoCoombs {
+  DIRECTO
+  INDIRECTO
+}
