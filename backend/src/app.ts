@@ -1,10 +1,11 @@
 import 'dotenv/config'
-import express, { type Application } from 'express'
 import cors from 'cors'
+import express, { type Application } from 'express'
+
 import corsConfig from '@/config/cors'
-import apiRoutes from '@/routes/index'
 import { setupSwagger } from '@/config/swagger'
 import { errorHandler } from '@/middlewares/error-handler'
+import apiRoutes from '@/routes/index'
 
 const app: Application = express()
 

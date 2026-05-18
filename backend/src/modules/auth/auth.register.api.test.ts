@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import app from '@/app'
 const mockUser = {
   id: 1,

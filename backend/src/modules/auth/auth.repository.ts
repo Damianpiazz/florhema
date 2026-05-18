@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma/client'
+import { prisma } from '@/lib/prisma'
 
 export async function findByEmail(email: string) {
   return prisma.user.findUnique({

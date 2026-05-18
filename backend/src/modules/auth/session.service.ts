@@ -1,6 +1,6 @@
-import { generateSessionToken } from '@/utils/token'
 import { AUTH } from '@/config/auth'
 import * as sessionRepository from '@/modules/auth/session.repository'
+import { generateSessionToken } from '@/utils/token'
 
 export async function createSession(userId: number) {
   const token = generateSessionToken()

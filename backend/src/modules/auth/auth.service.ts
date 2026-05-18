@@ -1,12 +1,12 @@
 import { prisma } from '@/lib/prisma'
+import * as auditRepository from '@/modules/audit/audit.repository'
+import { toUserResponse, toRegisterResponse } from '@/modules/auth/auth.dto'
+import * as authRepository from '@/modules/auth/auth.repository'
+import type { RegisterInput } from '@/modules/auth/auth.schema'
+import * as sessionService from '@/modules/auth/session.service'
 import { AppError } from '@/utils/app-error'
 import { normalizeEmail } from '@/utils/normalize-email'
 import { hashPassword } from '@/utils/password'
-import * as authRepository from '@/modules/auth/auth.repository'
-import * as sessionService from '@/modules/auth/session.service'
-import * as auditRepository from '@/modules/audit/audit.repository'
-import { toUserResponse, toRegisterResponse } from '@/modules/auth/auth.dto'
-import type { RegisterInput } from '@/modules/auth/auth.schema'
 
 export async function register(input: RegisterInput) {
   const email = normalizeEmail(input.email)

@@ -1,4 +1,5 @@
 import { randomBytes, createHash } from 'node:crypto'
+
 import { AUTH } from '@/config/auth'
 
 export interface GeneratedToken {

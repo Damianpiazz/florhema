@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
+
 import { registerSchema, registerResponseSchema } from '@/modules/auth/auth.schema'
 import * as authService from '@/modules/auth/auth.service'
 import { successResponse } from '@/utils/api-response'

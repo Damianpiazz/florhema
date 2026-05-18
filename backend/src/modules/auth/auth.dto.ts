@@ -15,9 +15,6 @@ export function toUserResponse(user: {
   })
 }
 
-export function toRegisterResponse(
-  user: UserResponse,
-  token: string
-): RegisterResponse {
+export function toRegisterResponse(user: UserResponse, token: string): RegisterResponse {
   return registerResponseSchema.parse({ user, token })
 }

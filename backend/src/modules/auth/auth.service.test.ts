@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { register } from './auth.service'
-import type { RegisterInput } from './auth.schema'
+import { register } from '@/modules/auth/auth.service'
+import type { RegisterInput } from '@/modules/auth/auth.schema'
 const mockUser = {
   id: 1,
   email: 'test@hospital.com',
@@ -14,16 +14,6 @@ const mockUser = {
   deletedById: null
 }
 const mockTokenRaw = 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6'
-vi.mock('@/modules/auth/auth.repository', () => ({
-  findByEmail: vi.fn(),
-  create: vi.fn()
-}))
-vi.mock('@/modules/auth/session.repository', () => ({
-  create: vi.fn()
-}))
-vi.mock('@/modules/audit/audit.repository', () => ({
-  create: vi.fn()
-}))
 vi.mock('@/utils/password', () => ({
   hashPassword: vi.fn(() => Promise.resolve('hashed_password_123'))
 }))
@@ -34,6 +24,16 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: vi.fn((cb: () => unknown) => cb())
   }
+}))
+vi.mock('@/modules/auth/auth.repository', () => ({
+  findByEmail: vi.fn(),
+  create: vi.fn()
+}))
+vi.mock('@/modules/auth/session.repository', () => ({
+  create: vi.fn()
+}))
+vi.mock('@/modules/audit/audit.repository', () => ({
+  create: vi.fn()
 }))
 import * as authRepository from '@/modules/auth/auth.repository'
 import * as sessionRepository from '@/modules/auth/session.repository'

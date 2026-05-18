@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma/client'
+import { prisma } from '@/lib/prisma'
 
 interface CreateAuditLogParams {
   userId: number

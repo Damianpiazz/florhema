@@ -1,15 +1,10 @@
 import type { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
-import { AppError } from '@/utils/app-error'
+
 import { errorResponse } from '@/utils/api-response'
+import { AppError } from '@/utils/app-error'
 
-export function errorHandler(
-  err: Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-) {
-
+export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
     res.status(err.statusCode).json(errorResponse(err.message))
     return
