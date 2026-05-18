@@ -12,6 +12,13 @@ export async function findByEmailWithPassword(email: string) {
   return prisma.user.findUnique({ where: { email } })
 }
 
+export async function findById(id: number) {
+  return prisma.user.findUnique({
+    where: { id },
+    omit: { password: true }
+  })
+}
+
 export async function create(data: Prisma.UserCreateInput) {
   return prisma.user.create({
     data,

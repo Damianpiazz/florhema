@@ -1,5 +1,5 @@
-import { userResponseSchema, registerResponseSchema } from '@/modules/auth/auth.schema'
-import type { UserResponse, RegisterResponse } from '@/modules/auth/auth.schema'
+import { userResponseSchema } from '@/modules/auth/auth.schema'
+import type { UserResponse } from '@/modules/auth/auth.schema'
 
 export function toUserResponse(user: {
   id: number
@@ -13,8 +13,4 @@ export function toUserResponse(user: {
     name: user.name,
     role: user.role
   })
-}
-
-export function toRegisterResponse(user: UserResponse, token: string): RegisterResponse {
-  return registerResponseSchema.parse({ user, token })
 }

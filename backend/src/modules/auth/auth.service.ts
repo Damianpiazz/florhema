@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import * as auditRepository from '@/modules/audit/audit.repository'
-import { toUserResponse, toRegisterResponse } from '@/modules/auth/auth.dto'
+import { toUserResponse } from '@/modules/auth/auth.dto'
 import * as authRepository from '@/modules/auth/auth.repository'
 import type { RegisterInput } from '@/modules/auth/auth.schema'
 import * as sessionService from '@/modules/auth/session.service'
@@ -30,7 +30,15 @@ export async function register(input: RegisterInput) {
     return { user: newUser, tokenRaw }
   })
   const userDto = toUserResponse(user)
-  return toRegisterResponse(userDto, tokenRaw)
+  return { user: userDto, tokenRaw }
+}
+
+export async function getMe(userId: number) {
+  const user = await authRepository.findById(userId)
+  if (!user) {
+    throw new AppError(401, 'No autenticado')
+  }
+  return toUserResponse(user)
 }
 
 async function ensureEmailNotTaken(email: string): Promise<void> {

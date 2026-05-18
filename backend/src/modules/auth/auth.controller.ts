@@ -1,6 +1,11 @@
 import type { Request, Response, NextFunction } from 'express'
 
-import { registerSchema, registerResponseSchema } from '@/modules/auth/auth.schema'
+import { AUTH } from '@/config/auth'
+import {
+  registerSchema,
+  registerResponseSchema,
+  userResponseSchema
+} from '@/modules/auth/auth.schema'
 import * as authService from '@/modules/auth/auth.service'
 import { successResponse } from '@/utils/api-response'
 
@@ -59,39 +64,81 @@ import { successResponse } from '@/utils/api-response'
  *                         role:
  *                           type: string
  *                           enum: [ADMIN, USER, INVITADO]
- *                     token:
- *                       type: string
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *               example: session_token=<token>; HttpOnly; Secure; SameSite=Lax; Path=/
  *       400:
  *         description: Error de validación
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
  *       409:
  *         description: El email ya está registrado
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
  */
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
     const input = registerSchema.parse(req.body)
-    const result = await authService.register(input)
-    const validated = registerResponseSchema.parse(result)
+    const { user, tokenRaw } = await authService.register(input)
+    const validated = registerResponseSchema.parse({ user })
+
+    res.cookie(AUTH.COOKIE_NAME, tokenRaw, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: AUTH.COOKIE_MAX_AGE_SECONDS * 1000,
+      domain: process.env.NODE_ENV !== 'production' ? AUTH.COOKIE_DOMAIN : undefined
+    })
+
     res.status(201).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/auth/me:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Obtener usuario autenticado
+ *     responses:
+ *       200:
+ *         description: Usuario autenticado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         email:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                           nullable: true
+ *                         role:
+ *                           type: string
+ *                           enum: [ADMIN, USER, INVITADO]
+ *       401:
+ *         description: No autenticado
+ */
+export async function getMe(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user
+    if (!user) {
+      return res.status(401).json(successResponse({ user: null }))
+    }
+    const validated = userResponseSchema.parse(user)
+    res.status(200).json(successResponse({ user: validated }))
   } catch (err) {
     next(err)
   }

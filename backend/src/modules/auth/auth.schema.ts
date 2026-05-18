@@ -14,8 +14,7 @@ export const userResponseSchema = z.object({
 })
 
 export const registerResponseSchema = z.object({
-  user: userResponseSchema,
-  token: z.string()
+  user: userResponseSchema
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>
