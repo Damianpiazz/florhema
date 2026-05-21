@@ -4,6 +4,7 @@ import cors from 'cors'
 import express, { type Application } from 'express'
 
 import corsConfig from '@/config/cors'
+import { httpLogger } from '@/config/logger'
 import { setupSwagger } from '@/config/swagger'
 import { errorHandler } from '@/middlewares/error-handler'
 import apiRoutes from '@/routes/index'
@@ -15,6 +16,8 @@ app.use(cors(corsConfig))
 app.use(express.json())
 
 app.use(cookieParser())
+
+app.use(httpLogger)
 
 // HEALTHCHECK
 app.get('/health', (_req, res) => {
