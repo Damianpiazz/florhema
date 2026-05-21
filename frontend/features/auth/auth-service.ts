@@ -1,31 +1,17 @@
 import { api } from '@/lib/axios'
-
-export interface User {
-  id: number
-  email: string
-  name: string | null
-  role: 'ADMIN' | 'USER' | 'INVITADO'
-}
-
-export interface RegisterInput {
-  email: string
-  password: string
-  name?: string
-}
+import { parseLoginResponse } from './auth.dto'
+import type { LoginInput, User } from './auth.schema'
 
 export const authService = {
-  async register(input: RegisterInput): Promise<User> {
-    const { data } = await api.post<{ success: true; data: { user: User } }>(
-      '/auth/register',
-      input
-    )
-    return data.data.user
+  async login(input: LoginInput): Promise<User> {
+    const { data } = await api.post('/auth/login', input)
+    return parseLoginResponse(data)
   },
 
   async getMe(): Promise<User | null> {
     try {
-      const { data } = await api.get<{ success: true; data: { user: User | null } }>('/auth/me')
-      return data.data.user
+      const { data } = await api.get('/auth/me')
+      return parseLoginResponse(data)
     } catch {
       return null
     }

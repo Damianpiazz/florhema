@@ -20,6 +20,9 @@
   "author": "",
   "license": "ISC",
   "type": "module",
+  "prisma": {
+    "seed": "tsx prisma/seed/index.ts"
+  },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
       "prettier --write",
