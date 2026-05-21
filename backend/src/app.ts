@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express, { type Application } from 'express'
 
@@ -12,6 +13,8 @@ const app: Application = express()
 app.use(cors(corsConfig))
 
 app.use(express.json())
+
+app.use(cookieParser())
 
 // HEALTHCHECK
 app.get('/health', (_req, res) => {

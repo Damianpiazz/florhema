@@ -1,6 +1,6 @@
+import type { Request, Response, Application } from 'express'
 import swaggerJsdoc from 'swagger-jsdoc'
 import swaggerUi from 'swagger-ui-express'
-import type { Request, Response, Application } from 'express'
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.3',
