@@ -25,6 +25,10 @@ export async function login(input: LoginInput) {
   return { user: userDto, tokenRaw }
 }
 
+export async function logout(tokenHash: string) {
+  await sessionService.revokeSession(tokenHash)
+}
+
 export async function getMe(userId: number) {
   const user = await authRepository.findById(userId)
   if (!user) {

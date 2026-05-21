@@ -8,3 +8,7 @@ export async function createSession(userId: number) {
   await sessionRepository.create(userId, token.hash, expiresAt)
   return { tokenRaw: token.raw }
 }
+
+export async function revokeSession(tokenHash: string) {
+  await sessionRepository.revoke(tokenHash)
+}

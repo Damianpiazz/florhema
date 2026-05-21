@@ -5,3 +5,10 @@ export async function create(userId: number, tokenHash: string, expiresAt: Date)
     data: { userId, tokenHash, expiresAt }
   })
 }
+
+export async function revoke(tokenHash: string) {
+  await prisma.session.update({
+    where: { tokenHash },
+    data: { revokedAt: new Date() }
+  })
+}
