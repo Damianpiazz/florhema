@@ -1,21 +1,17 @@
 import type { Request, Response, NextFunction } from 'express'
 
 import { AUTH } from '@/config/auth'
-import {
-  registerSchema,
-  registerResponseSchema,
-  userResponseSchema
-} from '@/modules/auth/auth.schema'
+import { loginSchema, userResponseSchema } from '@/modules/auth/auth.schema'
 import * as authService from '@/modules/auth/auth.service'
 import { successResponse } from '@/utils/api-response'
 
 /**
  * @openapi
- * /api/v1/auth/register:
+ * /api/v1/auth/login:
  *   post:
  *     tags:
  *       - Auth
- *     summary: Registrar un nuevo usuario
+ *     summary: Iniciar sesión
  *     requestBody:
  *       required: true
  *       content:
@@ -32,14 +28,10 @@ import { successResponse } from '@/utils/api-response'
  *                 example: tecnico@hospital.com
  *               password:
  *                 type: string
- *                 minLength: 6
  *                 example: miPassword123
- *               name:
- *                 type: string
- *                 example: Facundo Gómez
  *     responses:
- *       201:
- *         description: Usuario registrado exitosamente
+ *       200:
+ *         description: Inicio de sesión exitoso
  *         content:
  *           application/json:
  *             schema:
@@ -71,14 +63,14 @@ import { successResponse } from '@/utils/api-response'
  *               example: session_token=<token>; HttpOnly; Secure; SameSite=Lax; Path=/
  *       400:
  *         description: Error de validación
- *       409:
- *         description: El email ya está registrado
+ *       401:
+ *         description: Email o contraseña incorrectos
  */
-export async function register(req: Request, res: Response, next: NextFunction) {
+export async function login(req: Request, res: Response, next: NextFunction) {
   try {
-    const input = registerSchema.parse(req.body)
-    const { user, tokenRaw } = await authService.register(input)
-    const validated = registerResponseSchema.parse({ user })
+    const input = loginSchema.parse(req.body)
+    const { user, tokenRaw } = await authService.login(input)
+    const validated = userResponseSchema.parse(user)
 
     res.cookie(AUTH.COOKIE_NAME, tokenRaw, {
       httpOnly: true,
@@ -89,7 +81,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       domain: process.env.NODE_ENV !== 'production' ? AUTH.COOKIE_DOMAIN : undefined
     })
 
-    res.status(201).json(successResponse(validated))
+    res.status(200).json(successResponse({ user: validated }))
   } catch (err) {
     next(err)
   }

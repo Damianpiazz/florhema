@@ -1,9 +1,8 @@
 import { z } from 'zod'
 
-export const registerSchema = z.object({
+export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  name: z.string().optional()
+  password: z.string().min(1, 'La contraseña es requerida')
 })
 
 export const userResponseSchema = z.object({
@@ -13,10 +12,5 @@ export const userResponseSchema = z.object({
   role: z.enum(['ADMIN', 'USER', 'INVITADO'])
 })
 
-export const registerResponseSchema = z.object({
-  user: userResponseSchema
-})
-
-export type RegisterInput = z.infer<typeof registerSchema>
+export type LoginInput = z.infer<typeof loginSchema>
 export type UserResponse = z.infer<typeof userResponseSchema>
-export type RegisterResponse = z.infer<typeof registerResponseSchema>
