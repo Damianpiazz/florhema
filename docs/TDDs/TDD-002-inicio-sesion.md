@@ -64,9 +64,15 @@ Permitir que los usuarios registrados inicien sesión con email y contraseña pa
 *   **Response** `200 OK`:
 ```json
 {
-  "user": { "id": 1, "email": "tecnico@hospital.com", "name": "Facundo Gómez", "role": "USER" },
-  "token": "eyJhbGciOiJIUzI1NiIs..."
+  "success": true,
+  "data": {
+    "user": { "id": 1, "email": "tecnico@hospital.com", "name": "Facundo Gómez", "role": "USER" }
+  }
 }
+```
+Header `Set-Cookie`:
+```
+session_token=<token-opaco-hex>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=86400
 ```
 
 ### Estructura del Código
@@ -99,3 +105,55 @@ src/
 3. Implementar `AuthController.login`
 4. Agregar ruta `POST /api/v1/auth/login` en `auth.routes.ts`
 5. Tests: unitario (credenciales válidas, inválidas, soft-delete), integración con supertest
+
+## Seed de Datos
+
+Para poder probar el login se necesita un usuario inicial en la base de datos.
+
+### `prisma/seed.ts` — NUEVO
+
+Script para crear el primer administrador del sistema:
+
+```ts
+import { prisma } from '@/lib/prisma'
+import { hashPassword } from '@/utils/password'
+
+async function main() {
+  const email = 'admin@hospital.com'
+  const existing = await prisma.user.findUnique({ where: { email } })
+  if (existing) {
+    console.log('El admin ya existe.')
+    return
+  }
+
+  await prisma.user.create({
+    data: {
+      email,
+      password: await hashPassword('admin123'),
+      name: 'Administrador',
+      role: 'ADMIN'
+    }
+  })
+
+  console.log('Admin creado: admin@hospital.com / admin123')
+}
+
+main()
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(() => prisma.$disconnect())
+```
+
+Agregar script en `package.json`:
+```json
+"prisma": {
+  "seed": "tsx prisma/seed.ts"
+}
+```
+
+Ejecutar:
+```bash
+npx prisma db seed
+```

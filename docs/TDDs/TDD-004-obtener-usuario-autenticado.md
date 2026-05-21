@@ -9,7 +9,7 @@ titulo: Obtener Usuario Autenticado
 ## Contexto de Negocio (PRD)
 
 ### Objetivo
-Permitir que el frontend consulte quién es el usuario actualmente autenticado para mostrar su nombre y rol en la interfaz (RF0012).
+Permitir que el frontend consulte quién es el usuario actualmente autenticado para mostrar su nombre y rol en la interfaz.
 
 ### User Persona
 *   **Nombre**: Técnico / Licenciado en Hemoterapia
@@ -53,15 +53,14 @@ Permitir que el frontend consulte quién es el usuario actualmente autenticado p
 
 ### Contrato de API
 *   **Endpoint**: `GET /api/v1/auth/me`
-*   **Headers**: `Authorization: Bearer <token>`
+*   **Cookie**: `session_token=<token-opaco-hex>` (enviada automáticamente por el browser)
 *   **Response** `200 OK`:
 ```json
 {
-  "id": 1,
-  "email": "tecnico@hospital.com",
-  "name": "Facundo Gómez",
-  "role": "USER",
-  "createdAt": "2026-05-17T12:00:00.000Z"
+  "success": true,
+  "data": {
+    "user": { "id": 1, "email": "tecnico@hospital.com", "name": "Facundo Gómez", "role": "USER" }
+  }
 }
 ```
 
@@ -86,9 +85,9 @@ src/
 ## Casos de Borde y Errores
 | Escenario | Resultado Esperado | Código HTTP |
 |---|---|---|
-| Token inválido | `{ "error": "Token inválido" }` | 401 Unauthorized |
-| Token revocado | `{ "error": "Sesión no válida" }` | 401 Unauthorized |
-| Usuario soft-deleted | `{ "error": "Usuario no encontrado" }` | 401 Unauthorized |
+| Token inválido | `{ "success": false, "error": "No autenticado" }` | 401 Unauthorized |
+| Token revocado | `{ "success": false, "error": "Sesión revocada" }` | 401 Unauthorized |
+| Usuario soft-deleted | `{ "success": false, "error": "No autenticado" }` | 401 Unauthorized |
 
 ## Plan de Implementación
 1. Implementar `UserRepository.findById` (excluyendo soft-delete)

@@ -9,7 +9,7 @@ titulo: Cierre de Sesión
 ## Contexto de Negocio (PRD)
 
 ### Objetivo
-Permitir que el usuario cierre sesión revocando su token actual, para que no pueda seguir siendo usado (RF0012).
+Permitir que el usuario cierre sesión revocando su token actual, para que no pueda seguir siendo usado.
 
 ### User Persona
 *   **Nombre**: Técnico / Licenciado en Hemoterapia
@@ -18,7 +18,7 @@ Permitir que el usuario cierre sesión revocando su token actual, para que no pu
 ### Criterios de Aceptación
 *   El sistema debe revocar la sesión activa marcando `revokedAt`
 *   El token revocado no debe poder reutilizarse
-*   Requiere token válido en el header `Authorization`
+*   Requiere cookie `session_token` válida
 
 ## Diseño Técnico (RFC)
 
@@ -37,10 +37,10 @@ Permitir que el usuario cierre sesión revocando su token actual, para que no pu
 
 ### Contrato de API
 *   **Endpoint**: `POST /api/v1/auth/logout`
-*   **Headers**: `Authorization: Bearer <token>`
+*   **Cookie**: `session_token=<token-opaco-hex>` (enviada automáticamente por el browser)
 *   **Response** `200 OK`:
 ```json
-{ "message": "Sesión cerrada exitosamente" }
+{ "success": true, "data": { "message": "Sesión cerrada exitosamente" } }
 ```
 
 ### Estructura del Código
@@ -57,26 +57,27 @@ src/
 ```
 
 *   **Middleware** (`src/middleware/auth.middleware.ts`):
-    1. Lee `Authorization: Bearer <token>` del header
-    2. Busca Session por tokenHash en BD
-    3. Valida que no esté revocada (`revokedAt = null`)
-    4. Valida que no esté expirada (`expiresAt > now`)
-    5. Obtiene el User asociado
-    6. Inyecta `req.user` con `{ id, email, name, role }`
-    7. Llama a `next()` o responde 401
+    1. Lee `session_token` de la cookie (`req.cookies`)
+    2. Hashea el token con SHA-256
+    3. Busca Session por tokenHash en BD
+    4. Valida que no esté revocada (`revokedAt = null`)
+    5. Valida que no esté expirada (`expiresAt > now`)
+    6. Obtiene el User asociado
+    7. Inyecta `req.user` con `{ id, email, name, role }`
+    8. Llama a `next()` o responde 401
 *   **Controller**: usa el middleware, delega revocación al service
 *   **Service**: marca `revokedAt` en la sesión actual
 
 ## Casos de Borde y Errores
 | Escenario | Resultado Esperado | Código HTTP |
 |---|---|---|
-| Token inválido (no existe en BD) | `{ "error": "Token inválido" }` | 401 Unauthorized |
-| Token ya revocado | `{ "error": "Sesión no válida" }` | 401 Unauthorized |
-| Token expirado | `{ "error": "Sesión expirada" }` | 401 Unauthorized |
-| Sin header Authorization | `{ "error": "Token requerido" }` | 401 Unauthorized |
+| Token inválido (no existe en BD) | `{ "success": false, "error": "No autenticado" }` | 401 Unauthorized |
+| Token ya revocado | `{ "success": false, "error": "Sesión revocada" }` | 401 Unauthorized |
+| Token expirado | `{ "success": false, "error": "Sesión expirada" }` | 401 Unauthorized |
+| Sin cookie | `{ "success": false, "error": "No autenticado" }` | 401 Unauthorized |
 
 ## Plan de Implementación
-1. Implementar middleware `auth.middleware.ts`: parsear header, buscar Session por tokenHash, validar vigencia, inyectar `req.user`
+1. Implementar middleware `auth.middleware.ts`: leer cookie, hashear token, buscar Session por tokenHash, validar vigencia, inyectar `req.user`
 2. Implementar `SessionRepository.findByTokenHash` y `SessionRepository.revoke`
 3. Implementar `AuthService.logout`
 4. Implementar `AuthController.logout`

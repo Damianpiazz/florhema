@@ -2,9 +2,14 @@
 autor: Damián Piazza
 fecha: 2026-05-17
 titulo: Registro de Usuario
+estado: ELIMINADO
 ---
 
-# TDD-001: Registro de Usuario
+# TDD-001: Registro de Usuario — ELIMINADO
+
+> **Este caso de uso se elimina.**
+> El registro público ya no existe. Los usuarios solo pueden ser creados por un administrador.
+> Ver TDD-005 (Creación de Usuarios por Admin) cuando se implemente.
 
 ## Contexto de Negocio (PRD)
 
