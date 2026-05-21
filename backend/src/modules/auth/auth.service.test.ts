@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as authRepository from '@/modules/auth/auth.repository'
 import * as sessionRepository from '@/modules/auth/session.repository'
 import type { LoginInput } from '@/modules/auth/auth.schema'
-import { login } from '@/modules/auth/auth.service'
+import { login, logout } from '@/modules/auth/auth.service'
 
 const mockUser = {
   id: 1,
@@ -42,7 +42,8 @@ vi.mock('@/modules/auth/auth.repository', () => ({
 }))
 
 vi.mock('@/modules/auth/session.repository', () => ({
-  create: vi.fn()
+  create: vi.fn(),
+  revoke: vi.fn()
 }))
 
 import * as passwordUtils from '@/utils/password'
@@ -148,5 +149,19 @@ describe('login', () => {
     const result = await login(input)
 
     expect(result.user).not.toHaveProperty('password')
+  })
+})
+
+describe('logout', () => {
+  it('debe revocar la sesion con el token hash proporcionado', async () => {
+    await logout('sha256_hash_123')
+
+    expect(sessionRepository.revoke).toHaveBeenCalledWith('sha256_hash_123')
+  })
+
+  it('debe lanzar error si falla la revocacion', async () => {
+    vi.mocked(sessionRepository.revoke).mockRejectedValue(new Error('Database error'))
+
+    await expect(logout('sha256_hash_123')).rejects.toThrow('Database error')
   })
 })

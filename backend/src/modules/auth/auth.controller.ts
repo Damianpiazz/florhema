@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { Request, Response, NextFunction } from 'express'
 
 import { AUTH } from '@/config/auth'
@@ -123,6 +124,35 @@ export async function login(req: Request, res: Response, next: NextFunction) {
  *       401:
  *         description: No autenticado
  */
+/**
+ * @openapi
+ * /api/v1/auth/logout:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Cerrar sesión
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada exitosamente
+ *       401:
+ *         description: No autenticado
+ */
+export async function logout(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = req.cookies?.[AUTH.COOKIE_NAME]
+    if (!token) {
+      return res.status(401).json(successResponse({ message: 'No autenticado' }))
+    }
+
+    const tokenHash = createHash('sha256').update(token).digest('hex')
+    await authService.logout(tokenHash)
+
+    res.status(200).json(successResponse({ message: 'Sesión cerrada exitosamente' }))
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function getMe(req: Request, res: Response, next: NextFunction) {
   try {
     const user = req.user

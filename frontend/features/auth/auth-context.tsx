@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
 
@@ -37,9 +38,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user)
   }
 
+  const logout = async () => {
+    try {
+      await authService.logout()
+    } finally {
+      setUser(null)
+      window.location.href = '/login'
+    }
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, loading, login, refreshUser }}
+      value={{ user, isAuthenticated: !!user, loading, login, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

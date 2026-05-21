@@ -15,5 +15,9 @@ export const authService = {
     } catch {
       return null
     }
+  },
+
+  async logout(): Promise<void> {
+    await api.post('/auth/logout')
   }
 }
