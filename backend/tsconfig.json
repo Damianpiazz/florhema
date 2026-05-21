@@ -10,6 +10,13 @@
     "moduleResolution": "bundler",
     "target": "ES2023",
     "strict": true,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": [
+    "node_modules",
+    "prisma",
+    "vitest.config.ts",
+    "prisma.config.ts"
+  ]
 }
