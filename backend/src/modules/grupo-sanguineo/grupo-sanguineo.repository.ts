@@ -32,3 +32,16 @@ export async function update(id: number, data: { tipo: string; factorRh: string 
     }
   })
 }
+
+export async function softDelete(id: number, deletedById: number) {
+  return prisma.grupoSanguineo.update({
+    where: { id },
+    data: { deletedAt: new Date(), deletedById }
+  })
+}
+
+export async function countPersonasVinculadas(id: number) {
+  return prisma.persona.count({
+    where: { grupoSanguineoId: id, deletedAt: null }
+  })
+}

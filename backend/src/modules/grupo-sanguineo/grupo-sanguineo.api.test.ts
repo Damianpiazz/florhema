@@ -93,6 +93,9 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn()
+    },
+    persona: {
+      count: vi.fn()
     }
   }
 }))
@@ -279,6 +282,124 @@ describe('PUT /api/v1/grupos-sanguineos/:id', () => {
     const res = await request(app)
       .put('/api/v1/grupos-sanguineos/1')
       .send({ tipo: 'AB', factorRh: 'NEGATIVO' })
+
+    expect(res.status).toBe(401)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'No autenticado'
+    })
+  })
+})
+
+describe('DELETE /api/v1/grupos-sanguineos/:id', () => {
+  it('debe responder 200 cuando ADMIN elimina un grupo', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockAdminSession)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue(mockGrupo)
+    vi.mocked(prisma.persona.count).mockResolvedValue(0)
+    vi.mocked(prisma.grupoSanguineo.update).mockResolvedValue({
+      ...mockGrupo,
+      deletedAt: new Date(),
+      deletedById: 1
+    })
+
+    const res = await request(app)
+      .delete('/api/v1/grupos-sanguineos/1')
+      .set('Cookie', 'session_token=admin_valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({
+      success: true,
+      data: { message: 'Grupo sanguíneo eliminado correctamente' }
+    })
+    expect(prisma.grupoSanguineo.findUnique).toHaveBeenCalledWith({ where: { id: 1 } })
+    expect(prisma.persona.count).toHaveBeenCalledWith({
+      where: { grupoSanguineoId: 1, deletedAt: null }
+    })
+    expect(prisma.grupoSanguineo.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { deletedAt: expect.any(Date), deletedById: 1 }
+    })
+  })
+
+  it('debe responder 404 cuando el grupo no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockAdminSession)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue(null)
+
+    const res = await request(app)
+      .delete('/api/v1/grupos-sanguineos/999')
+      .set('Cookie', 'session_token=admin_valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Grupo sanguíneo no encontrado'
+    })
+  })
+
+  it('debe responder 404 cuando el grupo esta soft-deleted', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockAdminSession)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue({
+      ...mockGrupo,
+      deletedAt: new Date()
+    })
+
+    const res = await request(app)
+      .delete('/api/v1/grupos-sanguineos/1')
+      .set('Cookie', 'session_token=admin_valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Grupo sanguíneo no encontrado'
+    })
+  })
+
+  it('debe responder 409 cuando el grupo tiene personas vinculadas', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockAdminSession)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue(mockGrupo)
+    vi.mocked(prisma.persona.count).mockResolvedValue(3)
+
+    const res = await request(app)
+      .delete('/api/v1/grupos-sanguineos/1')
+      .set('Cookie', 'session_token=admin_valid_token')
+
+    expect(res.status).toBe(409)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'No se puede eliminar el grupo porque tiene personas asociadas'
+    })
+  })
+
+  it('debe responder 403 cuando el usuario no es ADMIN', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockUserSession)
+
+    const res = await request(app)
+      .delete('/api/v1/grupos-sanguineos/1')
+      .set('Cookie', 'session_token=user_valid_token')
+
+    expect(res.status).toBe(403)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Acción no permitida. Se requiere rol ADMIN'
+    })
+  })
+
+  it('debe responder 401 cuando no hay sesion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app).delete('/api/v1/grupos-sanguineos/1')
 
     expect(res.status).toBe(401)
     expect(res.body).toEqual({

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import type { $Enums } from '@/generated/prisma/client'
 import * as grupoSanguineoRepository from '@/modules/grupo-sanguineo/grupo-sanguineo.repository'
-import { listar, actualizar } from '@/modules/grupo-sanguineo/grupo-sanguineo.service'
+import { listar, actualizar, eliminar } from '@/modules/grupo-sanguineo/grupo-sanguineo.service'
 
 const mockGrupos = [
   {
@@ -68,7 +68,9 @@ vi.mock('@/modules/grupo-sanguineo/grupo-sanguineo.repository', () => ({
   findAllActive: vi.fn(),
   findById: vi.fn(),
   findByTipoFactorRh: vi.fn(),
-  update: vi.fn()
+  update: vi.fn(),
+  softDelete: vi.fn(),
+  countPersonasVinculadas: vi.fn()
 }))
 
 beforeEach(() => {
@@ -175,5 +177,69 @@ describe('actualizar', () => {
       { tipo: 'AB', factorRh: 'NEGATIVO' },
       42
     )
+  })
+})
+
+describe('eliminar', () => {
+  it('debe eliminar y retornar mensaje de exito', async () => {
+    vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(mockGrupo)
+    vi.mocked(grupoSanguineoRepository.countPersonasVinculadas).mockResolvedValue(0)
+    vi.mocked(grupoSanguineoRepository.softDelete).mockResolvedValue({
+      ...mockGrupo,
+      deletedAt: new Date(),
+      deletedById: 1
+    })
+
+    const result = await eliminar(1, 1)
+
+    expect(result).toEqual({ message: 'Grupo sanguíneo eliminado correctamente' })
+    expect(grupoSanguineoRepository.findById).toHaveBeenCalledWith(1)
+    expect(grupoSanguineoRepository.countPersonasVinculadas).toHaveBeenCalledWith(1)
+    expect(grupoSanguineoRepository.softDelete).toHaveBeenCalledWith(1, 1)
+  })
+
+  it('debe lanzar AppError 404 cuando el grupo no existe', async () => {
+    vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(null)
+
+    await expect(eliminar(999, 1)).rejects.toMatchObject({
+      statusCode: 404,
+      message: 'Grupo sanguíneo no encontrado'
+    })
+  })
+
+  it('debe lanzar AppError 404 cuando el grupo esta soft-deleted', async () => {
+    vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue({
+      ...mockGrupo,
+      deletedAt: new Date()
+    })
+
+    await expect(eliminar(1, 1)).rejects.toMatchObject({
+      statusCode: 404,
+      message: 'Grupo sanguíneo no encontrado'
+    })
+  })
+
+  it('debe lanzar AppError 409 cuando tiene personas vinculadas', async () => {
+    vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(mockGrupo)
+    vi.mocked(grupoSanguineoRepository.countPersonasVinculadas).mockResolvedValue(3)
+
+    await expect(eliminar(1, 1)).rejects.toMatchObject({
+      statusCode: 409,
+      message: 'No se puede eliminar el grupo porque tiene personas asociadas'
+    })
+  })
+
+  it('debe llamar a softDelete con deletedById correcto', async () => {
+    vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(mockGrupo)
+    vi.mocked(grupoSanguineoRepository.countPersonasVinculadas).mockResolvedValue(0)
+    vi.mocked(grupoSanguineoRepository.softDelete).mockResolvedValue({
+      ...mockGrupo,
+      deletedAt: new Date(),
+      deletedById: 42
+    })
+
+    await eliminar(1, 42)
+
+    expect(grupoSanguineoRepository.softDelete).toHaveBeenCalledWith(1, 42)
   })
 })

@@ -11,6 +11,24 @@ export async function listar() {
   return grupos.map(toGrupoSanguineoResponse)
 }
 
+export async function eliminar(id: number, deletedById: number) {
+  const grupo = await grupoSanguineoRepository.findById(id)
+
+  if (!grupo || grupo.deletedAt) {
+    throw new AppError(404, 'Grupo sanguíneo no encontrado')
+  }
+
+  const vinculadas = await grupoSanguineoRepository.countPersonasVinculadas(id)
+
+  if (vinculadas > 0) {
+    throw new AppError(409, 'No se puede eliminar el grupo porque tiene personas asociadas')
+  }
+
+  await grupoSanguineoRepository.softDelete(id, deletedById)
+
+  return { message: 'Grupo sanguíneo eliminado correctamente' }
+}
+
 export async function actualizar(id: number, data: ActualizarGrupoInput, userId: number) {
   const grupo = await grupoSanguineoRepository.findById(id)
 
