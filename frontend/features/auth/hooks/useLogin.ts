@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { extractErrorMessage } from '@/lib/error-utils'
 import { loginSchema } from '@/features/auth/auth.schema'
 import { useAuth } from '@/features/auth/auth-context'
 
@@ -47,11 +48,7 @@ export function useLogin(redirectTo = '/') {
       setSuccess(true)
       setTimeout(() => router.push(redirectTo), 800)
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErrors({ general: err.message })
-      } else {
-        setErrors({ general: 'Error del servidor. Intente nuevamente.' })
-      }
+      setErrors({ general: extractErrorMessage(err, 'Error del servidor. Intente nuevamente.') })
     } finally {
       setLoading(false)
     }
