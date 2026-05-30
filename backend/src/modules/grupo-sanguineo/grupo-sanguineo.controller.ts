@@ -1,8 +1,12 @@
 import type { Request, Response, NextFunction } from 'express'
 
-import { grupoSanguineoListResponseSchema } from '@/modules/grupo-sanguineo/grupo-sanguineo.schema'
+import {
+  actualizarGrupoSchema,
+  grupoSanguineoListResponseSchema
+} from '@/modules/grupo-sanguineo/grupo-sanguineo.schema'
 import * as grupoSanguineoService from '@/modules/grupo-sanguineo/grupo-sanguineo.service'
 import { successResponse } from '@/utils/api-response'
+
 /**
  * @openapi
  * /api/v1/grupos-sanguineos:
@@ -42,6 +46,79 @@ export async function list(_req: Request, res: Response, next: NextFunction) {
     const items = await grupoSanguineoService.listar()
     const validated = grupoSanguineoListResponseSchema.parse({ items })
     res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/grupos-sanguineos/{id}:
+ *   put:
+ *     tags:
+ *       - Grupos Sanguíneos
+ *     summary: Actualizar un grupo sanguíneo
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tipo
+ *               - factorRh
+ *             properties:
+ *               tipo:
+ *                 type: string
+ *                 enum: [A, B, AB, O]
+ *               factorRh:
+ *                 type: string
+ *                 enum: [POSITIVO, NEGATIVO]
+ *     responses:
+ *       200:
+ *         description: Grupo sanguíneo actualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     item:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         tipo:
+ *                           type: string
+ *                         factorRh:
+ *                           type: string
+ *       400:
+ *         description: Error de validación (Zod)
+ *       403:
+ *         description: Acción no permitida. Se requiere rol ADMIN
+ *       404:
+ *         description: Grupo sanguíneo no encontrado
+ *       409:
+ *         description: Ya existe un grupo con esa combinación de tipo y factor Rh
+ */
+export async function update(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const data = actualizarGrupoSchema.parse(req.body)
+    const result = await grupoSanguineoService.actualizar(id, data, req.user!.id)
+    res.status(200).json(successResponse(result))
   } catch (err) {
     next(err)
   }
