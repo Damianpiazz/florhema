@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 
 import type { Request, Response, NextFunction } from 'express'
+
 import { AUTH } from '@/config/auth'
 import { prisma } from '@/lib/prisma'
 import { errorResponse } from '@/utils/api-response'
@@ -36,4 +37,12 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   } catch (err) {
     next(err)
   }
+}
+
+export async function adminMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role !== 'ADMIN') {
+    return res.status(403).json(errorResponse('Acción no permitida. Se requiere rol ADMIN'))
+  }
+
+  next()
 }
