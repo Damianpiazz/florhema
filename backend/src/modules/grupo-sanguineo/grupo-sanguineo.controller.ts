@@ -123,3 +123,50 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     next(err)
   }
 }
+
+/**
+ * @openapi
+ * /api/v1/grupos-sanguineos/{id}:
+ *   delete:
+ *     tags:
+ *       - Grupos Sanguíneos
+ *     summary: Eliminar (soft-delete) un grupo sanguíneo
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Grupo sanguíneo eliminado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *       403:
+ *         description: Acción no permitida. Se requiere rol ADMIN
+ *       404:
+ *         description: Grupo sanguíneo no encontrado
+ *       409:
+ *         description: No se puede eliminar el grupo porque tiene personas asociadas
+ */
+export async function remove(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const result = await grupoSanguineoService.eliminar(id, req.user!.id)
+    res.status(200).json(successResponse(result))
+  } catch (err) {
+    next(err)
+  }
+}
