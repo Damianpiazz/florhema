@@ -12,3 +12,11 @@ export function toGrupoSanguineoResponse(grupo: {
     factorRh: grupo.factorRh
   })
 }
+
+export function toGrupoSanguineoItemResponse(grupo: {
+  id: number
+  tipo: string
+  factorRh: string
+}) {
+  return { item: toGrupoSanguineoResponse(grupo) }
+}
