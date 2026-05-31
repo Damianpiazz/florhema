@@ -7,16 +7,22 @@ import type { Persona, PersonaFormInput } from '@/features/personas/personas.sch
 export function usePersonaDialog(onSuccess?: () => void) {
   const [editing, setEditing] = useState<Persona | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const handleSave = useCallback(async (input: PersonaFormInput) => {
-    if (editing) {
-      await personasService.actualizar(editing.id, input)
-    } else {
-      await personasService.crear(input)
+    setSaving(true)
+    try {
+      if (editing) {
+        await personasService.actualizar(editing.id, input)
+      } else {
+        await personasService.crear(input)
+      }
+      setDialogOpen(false)
+      setEditing(null)
+      onSuccess?.()
+    } finally {
+      setSaving(false)
     }
-    setDialogOpen(false)
-    setEditing(null)
-    onSuccess?.()
   }, [editing, onSuccess])
 
   return {
@@ -25,5 +31,6 @@ export function usePersonaDialog(onSuccess?: () => void) {
     dialogOpen,
     setDialogOpen,
     handleSave,
+    saving,
   }
 }
