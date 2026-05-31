@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useAuth } from '@/features/auth/auth-context'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { AppSidebar } from '@/components/app-sidebar'
 import {
   SidebarProvider,
@@ -25,6 +26,13 @@ export default function ProtectedLayout({
 }) {
   const { isAuthenticated, loading } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login')
+    }
+  }, [loading, isAuthenticated, router])
 
   if (loading) {
     return (
