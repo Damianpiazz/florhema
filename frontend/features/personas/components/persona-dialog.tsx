@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useReducer, useEffect, useState } from 'react'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { formatGrupoSanguineo } from '@/lib/grupo-utils'
@@ -16,6 +16,16 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import type { Persona, PersonaFormInput } from '@/features/personas/personas.schema'
 import type { GrupoSanguineo } from '@/features/grupos-sanguineos/grupos-sanguineos.schema'
 
@@ -24,55 +34,96 @@ interface PersonaDialogProps {
   onOpenChange: (open: boolean) => void
   editing: Persona | null
   onSave: (input: PersonaFormInput) => Promise<void>
+  saving: boolean
   grupos: GrupoSanguineo[]
   loadingGrupos: boolean
 }
 
-export function PersonaDialog({ open, onOpenChange, editing, onSave, grupos, loadingGrupos }: PersonaDialogProps) {
-  const [dni, setDni] = useState('')
-  const [nombre, setNombre] = useState('')
-  const [apellido, setApellido] = useState('')
-  const [fechaNacimiento, setFechaNacimiento] = useState('')
-  const [direccion, setDireccion] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [grupoSanguineoId, setGrupoSanguineoId] = useState<number | ''>('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+interface FormState {
+  dni: string
+  nombre: string
+  apellido: string
+  fechaNacimiento: string
+  direccion: string
+  telefono: string
+  grupoSanguineoId: string
+}
+
+type FormAction =
+  | { type: 'SET_FIELD'; field: keyof FormState; value: string }
+  | { type: 'RESET'; values?: Partial<FormState> }
+
+const initialState: FormState = {
+  dni: '',
+  nombre: '',
+  apellido: '',
+  fechaNacimiento: '',
+  direccion: '',
+  telefono: '',
+  grupoSanguineoId: '',
+}
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value }
+    case 'RESET':
+      return { ...initialState, ...action.values }
+    default:
+      return state
+  }
+}
+
+function toInput(state: FormState): PersonaFormInput {
+  return {
+    dni: state.dni,
+    nombre: state.nombre,
+    apellido: state.apellido,
+    fechaNacimiento: state.fechaNacimiento,
+    direccion: state.direccion,
+    telefono: state.telefono,
+    grupoSanguineoId: Number(state.grupoSanguineoId),
+  }
+}
+
+export function PersonaDialog({ open, onOpenChange, editing, onSave, saving, grupos, loadingGrupos }: PersonaDialogProps) {
+  const [form, dispatch] = useReducer(formReducer, initialState)
+  const [serverError, setServerError] = useState<string | null>(null)
 
   useEffect(() => {
     if (editing) {
-      setDni(editing.dni)
-      setNombre(editing.nombre)
-      setApellido(editing.apellido)
-      setFechaNacimiento(editing.fechaNacimiento.split('T')[0])
-      setDireccion(editing.direccion)
-      setTelefono(editing.telefono)
-      setGrupoSanguineoId(editing.grupoSanguineo.id)
+      dispatch({
+        type: 'RESET',
+        values: {
+          dni: editing.dni,
+          nombre: editing.nombre,
+          apellido: editing.apellido,
+          fechaNacimiento: editing.fechaNacimiento.split('T')[0],
+          direccion: editing.direccion,
+          telefono: editing.telefono,
+          grupoSanguineoId: String(editing.grupoSanguineo.id),
+        },
+      })
     } else {
-      setDni('')
-      setNombre('')
-      setApellido('')
-      setFechaNacimiento('')
-      setDireccion('')
-      setTelefono('')
-      setGrupoSanguineoId(grupos.length > 0 ? grupos[0].id : '')
+      const defaultGroup = grupos.length > 0 ? String(grupos[0].id) : ''
+      dispatch({ type: 'RESET', values: { grupoSanguineoId: defaultGroup } })
     }
-    setError(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing, open])
+    setServerError(null)
+  }, [editing, open, grupos.length])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (grupoSanguineoId === '') return
-    setSaving(true)
-    setError(null)
+    if (form.grupoSanguineoId === '') return
+    setServerError(null)
     try {
-      await onSave({ dni, nombre, apellido, fechaNacimiento, direccion, telefono, grupoSanguineoId })
+      await onSave(toInput(form))
     } catch (err) {
-      setError(extractErrorMessage(err, 'Error al guardar'))
-    } finally {
-      setSaving(false)
+      setServerError(extractErrorMessage(err, 'Error al guardar'))
     }
+  }
+
+  const setField = (field: keyof FormState, value: string) => {
+    dispatch({ type: 'SET_FIELD', field, value })
   }
 
   return (
@@ -83,46 +134,44 @@ export function PersonaDialog({ open, onOpenChange, editing, onSave, grupos, loa
           <DialogDescription>Completá los datos de la persona.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <ErrorAlert message={error} />
+          <ErrorAlert message={serverError} />
 
           <Field>
             <FieldLabel htmlFor="dni">DNI</FieldLabel>
-            <Input id="dni" value={dni} onChange={(e) => setDni(e.target.value)} inputMode="numeric" required />
+            <Input id="dni" value={form.dni} onChange={(e) => setField('dni', e.target.value)} inputMode="numeric" required />
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
             <Field>
               <FieldLabel htmlFor="nombre">Nombre</FieldLabel>
-              <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+              <Input id="nombre" value={form.nombre} onChange={(e) => setField('nombre', e.target.value)} required />
             </Field>
             <Field>
               <FieldLabel htmlFor="apellido">Apellido</FieldLabel>
-              <Input id="apellido" value={apellido} onChange={(e) => setApellido(e.target.value)} required />
+              <Input id="apellido" value={form.apellido} onChange={(e) => setField('apellido', e.target.value)} required />
             </Field>
           </div>
 
           <Field>
             <FieldLabel htmlFor="fechaNacimiento">Fecha de Nacimiento</FieldLabel>
-            <Input
+            <DatePicker
               id="fechaNacimiento"
-              type="date"
-              value={fechaNacimiento}
-              onChange={(e) => setFechaNacimiento(e.target.value)}
-              required
+              value={form.fechaNacimiento}
+              onChange={(v) => setField('fechaNacimiento', v)}
             />
           </Field>
 
           <Field>
             <FieldLabel htmlFor="direccion">Dirección</FieldLabel>
-            <Input id="direccion" value={direccion} onChange={(e) => setDireccion(e.target.value)} required />
+            <Input id="direccion" value={form.direccion} onChange={(e) => setField('direccion', e.target.value)} required />
           </Field>
 
           <Field>
             <FieldLabel htmlFor="telefono">Teléfono</FieldLabel>
             <Input
               id="telefono"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
+              value={form.telefono}
+              onChange={(e) => setField('telefono', e.target.value)}
               inputMode="tel"
               required
             />
@@ -133,19 +182,24 @@ export function PersonaDialog({ open, onOpenChange, editing, onSave, grupos, loa
             {loadingGrupos ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              <select
-                id="grupoSanguineoId"
-                value={grupoSanguineoId}
-                onChange={(e) => setGrupoSanguineoId(Number(e.target.value))}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm"
-                required
+              <Select
+                value={form.grupoSanguineoId || undefined}
+                onValueChange={(v) => setField('grupoSanguineoId', v)}
               >
-                {grupos.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {formatGrupoSanguineo(g.tipo, g.factorRh)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="grupoSanguineoId" className="w-full">
+                  <SelectValue placeholder="Seleccionar grupo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Grupos sanguíneos</SelectLabel>
+                    {grupos.map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>
+                        {formatGrupoSanguineo(g.tipo, g.factorRh)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             )}
           </Field>
 
@@ -153,7 +207,7 @@ export function PersonaDialog({ open, onOpenChange, editing, onSave, grupos, loa
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving || grupoSanguineoId === ''}>
+            <Button type="submit" disabled={saving || form.grupoSanguineoId === ''}>
               {saving ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>
