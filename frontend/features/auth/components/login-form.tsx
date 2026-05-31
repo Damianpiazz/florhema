@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link'
+import { ErrorAlert } from '@/components/ui/error-alert'
 import { Loader2, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -42,14 +43,7 @@ export function LoginForm({
           </p>
         </div>
 
-        {errors.general && (
-          <div
-            role="alert"
-            className="text-sm font-normal text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2 text-center"
-          >
-            {errors.general}
-          </div>
-        )}
+        <ErrorAlert message={errors.general} />
 
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
