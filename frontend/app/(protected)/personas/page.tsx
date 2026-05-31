@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import { usePersonasList } from '@/features/personas/hooks/usePersonasList'
+import { usePersonasQuery } from '@/features/personas/hooks/usePersonasQuery'
 import { usePersonaDialog } from '@/features/personas/hooks/usePersonaDialog'
 import { usePersonaDelete } from '@/features/personas/hooks/usePersonaDelete'
 import { useGruposSanguineos } from '@/features/grupos-sanguineos/hooks/useGruposSanguineos'
@@ -12,41 +14,49 @@ export default function PersonasPage() {
   const {
     searchInput,
     setSearchInput,
+    searchQuery,
     handleSearch,
     page,
     handlePageChange,
-    handlePageSizeChange,
     pageSize,
-    personas,
-    total,
-    loading,
-    error,
-    refetch,
+    handlePageSizeChange,
   } = usePersonasList()
+
+  const { data, isLoading, error, refetch } = usePersonasQuery(searchQuery, page, pageSize)
 
   const { grupos, loading: loadingGrupos } = useGruposSanguineos()
 
-  const { editing, setEditing, dialogOpen, setDialogOpen, handleSave } = usePersonaDialog(refetch)
+  const { editing, setEditing, dialogOpen, setDialogOpen, handleSave, saving } =
+    usePersonaDialog(refetch)
 
-  const { deleteId, setDeleteId, handleDelete, error: deleteError, setError: setDeleteError } =
+  const { deleteId, setDeleteId, handleDelete, handleClose, error: deleteError, deleting } =
     usePersonaDelete(refetch)
+
+  const personas = data?.items ?? []
+  const total = data?.total ?? 0
+  const totalPages = useMemo(() => Math.ceil(total / pageSize) || 1, [total, pageSize])
 
   return (
     <div className="p-6">
-
       <PersonasTable
-        searchInput={searchInput}
-        onSearchInputChange={setSearchInput}
-        handleSearch={handleSearch}
-        page={page}
-        totalPages={Math.ceil(total / pageSize) || 1}
-        total={total}
-        onPageChange={handlePageChange}
-        pageSize={pageSize}
-        onPageSizeChange={handlePageSizeChange}
-        personas={personas}
-        loading={loading}
-        error={error}
+        search={{
+          value: searchInput,
+          onChange: setSearchInput,
+          onSearch: handleSearch,
+        }}
+        pagination={{
+          page,
+          totalPages,
+          total,
+          onPageChange: handlePageChange,
+          pageSize,
+          onPageSizeChange: handlePageSizeChange,
+        }}
+        data={{
+          items: personas,
+          loading: isLoading,
+          error: error?.message ?? null,
+        }}
         onNueva={() => {
           setEditing(null)
           setDialogOpen(true)
@@ -63,16 +73,17 @@ export default function PersonasPage() {
         onOpenChange={setDialogOpen}
         editing={editing}
         onSave={handleSave}
+        saving={saving}
         grupos={grupos}
         loadingGrupos={loadingGrupos}
       />
 
       <PersonaDeleteDialog
         deleteId={deleteId}
-        onClose={() => setDeleteId(null)}
+        onClose={handleClose}
         onConfirm={handleDelete}
-        serverError={deleteError}
-        onClearError={() => setDeleteError(null)}
+        error={deleteError}
+        deleting={deleting}
       />
     </div>
   )
