@@ -3,6 +3,13 @@
 import { ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface PaginationBarProps {
   page: number
@@ -22,18 +29,21 @@ export function PaginationBar({ page, totalPages, total, onPageChange, pageSize,
           <Label htmlFor="page-size" className="text-sm text-muted-foreground">
             Filas por página
           </Label>
-          <select
-            id="page-size"
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => onPageSizeChange(Number(v))}
           >
-            {[10, 20, 30, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="page-size" size="sm" className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[5, 10, 20, 30, 50].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <p className="text-sm text-muted-foreground">
           Página {page} de {totalPages}
