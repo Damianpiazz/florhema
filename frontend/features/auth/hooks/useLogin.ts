@@ -12,7 +12,7 @@ interface LoginErrors {
   general?: string
 }
 
-export function useLogin(redirectTo = '/') {
+export function useLogin(redirectTo = '/personas') {
   const { login } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
