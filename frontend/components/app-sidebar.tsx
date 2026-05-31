@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/features/auth/auth-context'
 
+/* 
 const items = [
   { title: 'Personas', url: '/personas', icon: Users },
   { title: 'Donantes', url: '/donantes', icon: Heart },
@@ -18,6 +19,10 @@ const items = [
   { title: 'Recién Nacidos', url: '/recien-nacidos', icon: Baby },
   { title: 'Grupos Sanguíneos', url: '/grupos-sanguineos', icon: Droplets },
   { title: 'Usuarios', url: '/usuarios', icon: Shield },
+]
+*/
+const items = [
+  { title: 'Personas', url: '/personas', icon: Users },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
