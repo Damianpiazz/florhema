@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import {
   AlertDialog,
@@ -17,30 +16,13 @@ interface PersonaDeleteDialogProps {
   deleteId: number | null
   onClose: () => void
   onConfirm: () => Promise<void>
-  serverError: string | null
-  onClearError: () => void
+  error: string | null
+  deleting: boolean
 }
 
-export function PersonaDeleteDialog({ deleteId, onClose, onConfirm, serverError, onClearError }: PersonaDeleteDialogProps) {
-  const [deleting, setDeleting] = useState(false)
-
-  const handleConfirm = async () => {
-    setDeleting(true)
-    onClearError()
-    try {
-      await onConfirm()
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  const handleClose = () => {
-    onClearError()
-    onClose()
-  }
-
+export function PersonaDeleteDialog({ deleteId, onClose, onConfirm, error, deleting }: PersonaDeleteDialogProps) {
   return (
-    <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && handleClose()}>
+    <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>¿Eliminar persona?</AlertDialogTitle>
@@ -49,13 +31,13 @@ export function PersonaDeleteDialog({ deleteId, onClose, onConfirm, serverError,
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <ErrorAlert message={serverError} />
+        <ErrorAlert message={error} />
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={handleConfirm}
+            onClick={onConfirm}
             disabled={deleting}
           >
             {deleting ? 'Eliminando...' : 'Eliminar'}
