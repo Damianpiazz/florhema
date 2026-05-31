@@ -1,6 +1,32 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/features/auth/auth-context'
 import { LoginForm } from '@/features/auth/components/login-form'
 
 export default function LoginPage() {
+  const { isAuthenticated, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/personas')
+    }
+  }, [loading, isAuthenticated, router])
+
+  if (loading) {
+    return (
+      <div className="grid min-h-svh place-items-center">
+        <div className="text-muted-foreground">Cargando...</div>
+      </div>
+    )
+  }
+
+  if (isAuthenticated) {
+    return null
+  }
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
