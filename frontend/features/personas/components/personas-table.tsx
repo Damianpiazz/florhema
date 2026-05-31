@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Search,
   Plus,
   Pencil,
   Trash2,
+  Eye,
   Loader2,
   ChevronDown,
   Columns3,
@@ -13,10 +14,8 @@ import {
 import {
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table'
 import { Input } from '@/components/ui/input'
@@ -41,47 +40,45 @@ import { PaginationBar } from '@/components/data-table/pagination-bar'
 import type { Persona } from '@/features/personas/personas.schema'
 
 interface PersonasTableProps {
-  searchInput: string
-  onSearchInputChange: (q: string) => void
-  handleSearch: () => void
-  page: number
-  totalPages: number
-  total: number
-  onPageChange: (p: number) => void
-  pageSize: number
-  onPageSizeChange: (s: number) => void
-  personas: Persona[]
-  loading: boolean
-  error: string | null
+  search: {
+    value: string
+    onChange: (v: string) => void
+    onSearch: () => void
+  }
+  pagination: {
+    page: number
+    totalPages: number
+    total: number
+    onPageChange: (p: number) => void
+    pageSize: number
+    onPageSizeChange: (s: number) => void
+  }
+  data: {
+    items: Persona[]
+    loading: boolean
+    error: string | null
+  }
   onNueva: () => void
   onEditar: (p: Persona) => void
   onEliminar: (id: number) => void
 }
 
 export function PersonasTable({
-  searchInput,
-  onSearchInputChange,
-  handleSearch,
-  page,
-  totalPages,
-  total,
-  onPageChange,
-  pageSize,
-  onPageSizeChange,
-  personas,
-  loading,
-  error,
+  search,
+  pagination,
+  data,
   onNueva,
   onEditar,
   onEliminar,
 }: PersonasTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
-  const columns: ColumnDef<Persona>[] = [
+  const columns: ColumnDef<Persona>[] = useMemo(() => [
     {
       accessorKey: 'dni',
       header: 'DNI',
+      cell: ({ getValue }) => <span className="font-bold">{getValue<string>()}</span>,
+      enableHiding: false,
     },
     {
       accessorKey: 'nombre',
@@ -106,6 +103,10 @@ export function PersonasTable({
             <Pencil className="size-4" />
             <span className="sr-only">Editar</span>
           </Button>
+          <Button variant="ghost" size="icon">
+            <Eye className="size-4" />
+            <span className="sr-only">Ver detalle</span>
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
             <Trash2 className="size-4 text-destructive" />
             <span className="sr-only">Eliminar</span>
@@ -115,16 +116,14 @@ export function PersonasTable({
       enableSorting: false,
       enableHiding: false,
     },
-  ]
+  ], [onEditar, onEliminar])
 
   const table = useReactTable({
-    data: personas,
+    data: data.items,
     columns,
-    state: { sorting, columnVisibility },
-    onSortingChange: setSorting,
+    state: { columnVisibility },
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   })
 
   return (
@@ -134,13 +133,13 @@ export function PersonasTable({
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por DNI..."
-            value={searchInput}
-            onChange={(e) => onSearchInputChange(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            value={search.value}
+            onChange={(e) => search.onChange(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && search.onSearch()}
             className="pl-8"
           />
         </div>
-        <Button onClick={handleSearch} variant="secondary">
+        <Button onClick={search.onSearch} variant="secondary">
           Buscar
         </Button>
         <Button onClick={onNueva}>
@@ -172,7 +171,7 @@ export function PersonasTable({
         </DropdownMenu>
       </div>
 
-      <ErrorAlert message={error} />
+      <ErrorAlert message={data.error} />
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -190,7 +189,7 @@ export function PersonasTable({
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {data.loading ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8">
                   <Loader2 className="size-6 animate-spin mx-auto text-muted-foreground" />
@@ -221,12 +220,12 @@ export function PersonasTable({
       </div>
 
       <PaginationBar
-        page={page}
-        totalPages={totalPages}
-        total={total}
-        onPageChange={onPageChange}
-        pageSize={pageSize}
-        onPageSizeChange={onPageSizeChange}
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPageChange={pagination.onPageChange}
+        pageSize={pagination.pageSize}
+        onPageSizeChange={pagination.onPageSizeChange}
       />
     </div>
   )
