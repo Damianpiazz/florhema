@@ -23,7 +23,7 @@ export async function listar(params: { dni?: string; limit?: number; offset?: nu
   }
 }
 
-export async function crear(data: CrearPersonaInput, userId: number) {
+export async function crear(data: CrearPersonaInput) {
   const existente = await personaRepository.findByDni(data.dni)
   if (existente) {
     throw new AppError(409, 'El DNI ya existe en el sistema')
@@ -34,15 +34,12 @@ export async function crear(data: CrearPersonaInput, userId: number) {
     throw new AppError(404, 'El grupo sanguíneo indicado no existe')
   }
 
-  const persona = await personaRepository.create({
-    ...data,
-    createdById: userId,
-  })
+  const persona = await personaRepository.create(data)
 
   return toPersonaResponse(persona)
 }
 
-export async function actualizar(id: number, data: ActualizarPersonaInput, userId: number) {
+export async function actualizar(id: number, data: ActualizarPersonaInput) {
   const existente = await personaRepository.findById(id)
   if (!existente) {
     throw new AppError(404, 'Persona no encontrada')
@@ -58,15 +55,12 @@ export async function actualizar(id: number, data: ActualizarPersonaInput, userI
     throw new AppError(404, 'El grupo sanguíneo indicado no existe')
   }
 
-  const persona = await personaRepository.update(id, {
-    ...data,
-    updatedById: userId,
-  })
+  const persona = await personaRepository.update(id, data)
 
   return toPersonaResponse(persona)
 }
 
-export async function eliminar(id: number, deletedById: number) {
+export async function eliminar(id: number) {
   const existente = await personaRepository.findById(id)
   if (!existente) {
     throw new AppError(404, 'Persona no encontrada')
@@ -77,6 +71,6 @@ export async function eliminar(id: number, deletedById: number) {
     throw new AppError(409, 'No se puede eliminar la persona porque tiene un donante, paciente o gestante activo')
   }
 
-  await personaRepository.softDelete(id, deletedById)
+  await personaRepository.softDelete(id)
   return { message: 'Persona eliminada correctamente' }
 }
