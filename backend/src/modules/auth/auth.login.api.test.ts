@@ -11,9 +11,6 @@ const mockUser = {
   createdAt: new Date('2026-05-17T12:00:00.000Z'),
   updatedAt: new Date('2026-05-17T12:00:00.000Z'),
   deletedAt: null,
-  createdById: null,
-  updatedById: null,
-  deletedById: null
 }
 
 const mockUserWithPassword = {
@@ -31,10 +28,6 @@ vi.mock('@/modules/auth/auth.repository', () => ({
 }))
 
 vi.mock('@/modules/auth/session.repository', () => ({
-  create: vi.fn()
-}))
-
-vi.mock('@/modules/audit/audit.repository', () => ({
   create: vi.fn()
 }))
 
