@@ -12,9 +12,6 @@ const mockGrupos = [
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    createdById: null,
-    updatedById: null,
-    deletedById: null
   },
   {
     id: 2,
@@ -23,9 +20,6 @@ const mockGrupos = [
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    createdById: null,
-    updatedById: null,
-    deletedById: null
   },
   {
     id: 3,
@@ -34,9 +28,6 @@ const mockGrupos = [
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    createdById: null,
-    updatedById: null,
-    deletedById: null
   }
 ]
 
@@ -47,9 +38,6 @@ const mockGrupo = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  createdById: null,
-  updatedById: null,
-  deletedById: null
 }
 
 const mockUpdatedGrupo = {
@@ -59,9 +47,6 @@ const mockUpdatedGrupo = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  createdById: null,
-  updatedById: 1,
-  deletedById: null
 }
 
 vi.mock('@/modules/grupo-sanguineo/grupo-sanguineo.repository', () => ({
@@ -110,7 +95,7 @@ describe('actualizar', () => {
     vi.mocked(grupoSanguineoRepository.findByTipoFactorRh).mockResolvedValue(null)
     vi.mocked(grupoSanguineoRepository.update).mockResolvedValue(mockUpdatedGrupo)
 
-    const result = await actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' }, 1)
+    const result = await actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' })
 
     expect(result).toEqual({
       item: { id: 1, tipo: 'AB', factorRh: 'NEGATIVO' }
@@ -119,15 +104,14 @@ describe('actualizar', () => {
     expect(grupoSanguineoRepository.findByTipoFactorRh).toHaveBeenCalledWith('AB', 'NEGATIVO', 1)
     expect(grupoSanguineoRepository.update).toHaveBeenCalledWith(
       1,
-      { tipo: 'AB', factorRh: 'NEGATIVO' },
-      1
+      { tipo: 'AB', factorRh: 'NEGATIVO' }
     )
   })
 
   it('debe lanzar AppError 404 cuando el grupo no existe', async () => {
     vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(null)
 
-    await expect(actualizar(999, { tipo: 'AB', factorRh: 'NEGATIVO' }, 1)).rejects.toMatchObject({
+    await expect(actualizar(999, { tipo: 'AB', factorRh: 'NEGATIVO' })).rejects.toMatchObject({
       statusCode: 404,
       message: 'Grupo sanguíneo no encontrado'
     })
@@ -139,7 +123,7 @@ describe('actualizar', () => {
       deletedAt: new Date()
     })
 
-    await expect(actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' }, 1)).rejects.toMatchObject({
+    await expect(actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' })).rejects.toMatchObject({
       statusCode: 404,
       message: 'Grupo sanguíneo no encontrado'
     })
@@ -154,28 +138,24 @@ describe('actualizar', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
-      createdById: null,
-      updatedById: null,
-      deletedById: null
     })
 
-    await expect(actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' }, 1)).rejects.toMatchObject({
+    await expect(actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' })).rejects.toMatchObject({
       statusCode: 409,
       message: 'Ya existe un grupo con esa combinación de tipo y factor Rh'
     })
   })
 
-  it('debe llamar a update con updatedById', async () => {
+  it('debe llamar a update con los datos correctos', async () => {
     vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(mockGrupo)
     vi.mocked(grupoSanguineoRepository.findByTipoFactorRh).mockResolvedValue(null)
     vi.mocked(grupoSanguineoRepository.update).mockResolvedValue(mockUpdatedGrupo)
 
-    await actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' }, 42)
+    await actualizar(1, { tipo: 'AB', factorRh: 'NEGATIVO' })
 
     expect(grupoSanguineoRepository.update).toHaveBeenCalledWith(
       1,
-      { tipo: 'AB', factorRh: 'NEGATIVO' },
-      42
+      { tipo: 'AB', factorRh: 'NEGATIVO' }
     )
   })
 })
@@ -187,21 +167,20 @@ describe('eliminar', () => {
     vi.mocked(grupoSanguineoRepository.softDelete).mockResolvedValue({
       ...mockGrupo,
       deletedAt: new Date(),
-      deletedById: 1
     })
 
-    const result = await eliminar(1, 1)
+    const result = await eliminar(1)
 
     expect(result).toEqual({ message: 'Grupo sanguíneo eliminado correctamente' })
     expect(grupoSanguineoRepository.findById).toHaveBeenCalledWith(1)
     expect(grupoSanguineoRepository.countPersonasVinculadas).toHaveBeenCalledWith(1)
-    expect(grupoSanguineoRepository.softDelete).toHaveBeenCalledWith(1, 1)
+    expect(grupoSanguineoRepository.softDelete).toHaveBeenCalledWith(1)
   })
 
   it('debe lanzar AppError 404 cuando el grupo no existe', async () => {
     vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(null)
 
-    await expect(eliminar(999, 1)).rejects.toMatchObject({
+    await expect(eliminar(999)).rejects.toMatchObject({
       statusCode: 404,
       message: 'Grupo sanguíneo no encontrado'
     })
@@ -213,7 +192,7 @@ describe('eliminar', () => {
       deletedAt: new Date()
     })
 
-    await expect(eliminar(1, 1)).rejects.toMatchObject({
+    await expect(eliminar(1)).rejects.toMatchObject({
       statusCode: 404,
       message: 'Grupo sanguíneo no encontrado'
     })
@@ -223,23 +202,22 @@ describe('eliminar', () => {
     vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(mockGrupo)
     vi.mocked(grupoSanguineoRepository.countPersonasVinculadas).mockResolvedValue(3)
 
-    await expect(eliminar(1, 1)).rejects.toMatchObject({
+    await expect(eliminar(1)).rejects.toMatchObject({
       statusCode: 409,
       message: 'No se puede eliminar el grupo porque tiene personas asociadas'
     })
   })
 
-  it('debe llamar a softDelete con deletedById correcto', async () => {
+  it('debe llamar a softDelete', async () => {
     vi.mocked(grupoSanguineoRepository.findById).mockResolvedValue(mockGrupo)
     vi.mocked(grupoSanguineoRepository.countPersonasVinculadas).mockResolvedValue(0)
     vi.mocked(grupoSanguineoRepository.softDelete).mockResolvedValue({
       ...mockGrupo,
       deletedAt: new Date(),
-      deletedById: 42
     })
 
-    await eliminar(1, 42)
+    await eliminar(1)
 
-    expect(grupoSanguineoRepository.softDelete).toHaveBeenCalledWith(1, 42)
+    expect(grupoSanguineoRepository.softDelete).toHaveBeenCalledWith(1)
   })
 })
