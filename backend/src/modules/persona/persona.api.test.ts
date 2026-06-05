@@ -23,6 +23,24 @@ const mockPersonas = [
   },
 ]
 
+const mockCreatedPersona = {
+  id: 2,
+  dni: '87654321',
+  nombre: 'María',
+  apellido: 'García',
+  fechaNacimiento: new Date('1985-10-20'),
+  direccion: 'Calle Falsa 456',
+  telefono: '1198765432',
+  grupoSanguineoId: 2,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+  createdById: 1,
+  updatedById: null,
+  deletedById: null,
+  grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
+}
+
 const mockSession = {
   id: 1,
   userId: 1,
@@ -44,6 +62,11 @@ vi.mock('@/lib/prisma', () => ({
     persona: {
       findMany: vi.fn(),
       count: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+    grupoSanguineo: {
+      findUnique: vi.fn(),
     },
   },
 }))
@@ -125,6 +148,138 @@ describe('GET /api/v1/personas', () => {
     vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
 
     const res = await request(app).get('/api/v1/personas')
+
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('POST /api/v1/personas', () => {
+  it('debe responder 201 al crear una persona exitosamente', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue({
+      id: 2,
+      tipo: 'A',
+      factorRh: 'POSITIVO',
+      deletedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdById: null,
+      updatedById: null,
+      deletedById: null,
+    })
+    vi.mocked(prisma.persona.create).mockResolvedValue(mockCreatedPersona)
+
+    const res = await request(app)
+      .post('/api/v1/personas')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '87654321',
+        nombre: 'María',
+        apellido: 'García',
+        fechaNacimiento: '1985-10-20',
+        direccion: 'Calle Falsa 456',
+        telefono: '1198765432',
+        grupoSanguineoId: 2,
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        item: {
+          id: 2,
+          dni: '87654321',
+          nombre: 'María',
+          apellido: 'García',
+          fechaNacimiento: '1985-10-20T00:00:00.000Z',
+          direccion: 'Calle Falsa 456',
+          telefono: '1198765432',
+          grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
+        },
+      },
+    })
+  })
+
+  it('debe responder 409 cuando el DNI ya existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findUnique).mockResolvedValue(mockPersonas[0])
+
+    const res = await request(app)
+      .post('/api/v1/personas')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '12345678',
+        nombre: 'Juan',
+        apellido: 'Pérez',
+        fechaNacimiento: '1990-05-15',
+        direccion: 'Av. Siempre Viva 123',
+        telefono: '1112345678',
+        grupoSanguineoId: 1,
+      })
+
+    expect(res.status).toBe(409)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'El DNI ya existe en el sistema',
+    })
+  })
+
+  it('debe responder 404 cuando el grupo sanguíneo no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue(null)
+
+    const res = await request(app)
+      .post('/api/v1/personas')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '87654321',
+        nombre: 'María',
+        apellido: 'García',
+        fechaNacimiento: '1985-10-20',
+        direccion: 'Calle Falsa 456',
+        telefono: '1198765432',
+        grupoSanguineoId: 999,
+      })
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'El grupo sanguíneo indicado no existe',
+    })
+  })
+
+  it('debe responder 400 cuando faltan campos obligatorios', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+
+    const res = await request(app)
+      .post('/api/v1/personas')
+      .set('Cookie', 'session_token=valid_token')
+      .send({})
+
+    expect(res.status).toBe(400)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app)
+      .post('/api/v1/personas')
+      .send({
+        dni: '87654321',
+        nombre: 'María',
+        apellido: 'García',
+        fechaNacimiento: '1985-10-20',
+        direccion: 'Calle Falsa 456',
+        telefono: '1198765432',
+        grupoSanguineoId: 2,
+      })
 
     expect(res.status).toBe(401)
   })
