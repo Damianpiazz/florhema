@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 
-import { personaQuerySchema, listarPersonasResponseSchema } from '@/modules/persona/persona.schema'
+import { personaQuerySchema, listarPersonasResponseSchema, crearPersonaSchema, crearPersonaResponseSchema } from '@/modules/persona/persona.schema'
 import * as personaService from '@/modules/persona/persona.service'
 import { successResponse } from '@/utils/api-response'
 
@@ -35,51 +35,6 @@ import { successResponse } from '@/utils/api-response'
  *     responses:
  *       200:
  *         description: Lista paginada de personas
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     items:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                           dni:
- *                             type: string
- *                           nombre:
- *                             type: string
- *                           apellido:
- *                             type: string
- *                           fechaNacimiento:
- *                             type: string
- *                             format: date-time
- *                           direccion:
- *                             type: string
- *                           telefono:
- *                             type: string
- *                           grupoSanguineo:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: integer
- *                               tipo:
- *                                 type: string
- *                               factorRh:
- *                                 type: string
- *                     total:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     offset:
- *                       type: integer
  *       401:
  *         description: No autenticado
  */
@@ -89,6 +44,69 @@ export async function list(req: Request, res: Response, next: NextFunction) {
     const result = await personaService.listar(query)
     const validated = listarPersonasResponseSchema.parse(result)
     res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas:
+ *   post:
+ *     tags:
+ *       - Personas
+ *     summary: Crear una persona
+ *     description: Registra una nueva persona en el sistema. Requiere autenticación.
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - dni
+ *               - nombre
+ *               - apellido
+ *               - fechaNacimiento
+ *               - direccion
+ *               - telefono
+ *               - grupoSanguineoId
+ *             properties:
+ *               dni:
+ *                 type: string
+ *               nombre:
+ *                 type: string
+ *               apellido:
+ *                 type: string
+ *               fechaNacimiento:
+ *                 type: string
+ *                 format: date
+ *               direccion:
+ *                 type: string
+ *               telefono:
+ *                 type: string
+ *               grupoSanguineoId:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Persona creada exitosamente
+ *       400:
+ *         description: Error de validación (Zod)
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Grupo sanguíneo no encontrado
+ *       409:
+ *         description: DNI duplicado
+ */
+export async function create(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = crearPersonaSchema.parse(req.body)
+    const item = await personaService.crear(data, req.user!.id)
+    const validated = crearPersonaResponseSchema.parse({ item })
+    res.status(201).json(successResponse(validated))
   } catch (err) {
     next(err)
   }
