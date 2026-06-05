@@ -117,7 +117,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
     const data = actualizarGrupoSchema.parse(req.body)
-    const result = await grupoSanguineoService.actualizar(id, data, req.user!.id)
+    const result = await grupoSanguineoService.actualizar(id, data)
     res.status(200).json(successResponse(result))
   } catch (err) {
     next(err)
@@ -164,7 +164,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
 export async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
-    const result = await grupoSanguineoService.eliminar(id, req.user!.id)
+    const result = await grupoSanguineoService.eliminar(id)
     res.status(200).json(successResponse(result))
   } catch (err) {
     next(err)
