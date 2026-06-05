@@ -12,9 +12,6 @@ const mockGrupos = [
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    createdById: null,
-    updatedById: null,
-    deletedById: null
   },
   {
     id: 2,
@@ -23,9 +20,6 @@ const mockGrupos = [
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    createdById: null,
-    updatedById: null,
-    deletedById: null
   }
 ]
 
@@ -66,9 +60,6 @@ const mockGrupo = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  createdById: null,
-  updatedById: null,
-  deletedById: null
 }
 
 const mockUpdatedGrupo = {
@@ -78,9 +69,6 @@ const mockUpdatedGrupo = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  createdById: null,
-  updatedById: 1,
-  deletedById: null
 }
 
 vi.mock('@/lib/prisma', () => ({
@@ -171,7 +159,7 @@ describe('PUT /api/v1/grupos-sanguineos/:id', () => {
     expect(prisma.grupoSanguineo.findFirst).toHaveBeenCalled()
     expect(prisma.grupoSanguineo.update).toHaveBeenCalledWith({
       where: { id: 1 },
-      data: { tipo: 'AB', factorRh: 'NEGATIVO', updatedById: 1 }
+      data: { tipo: 'AB', factorRh: 'NEGATIVO' }
     })
   })
 
@@ -226,9 +214,6 @@ describe('PUT /api/v1/grupos-sanguineos/:id', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
-      createdById: null,
-      updatedById: null,
-      deletedById: null
     })
 
     const res = await request(app)
@@ -301,7 +286,6 @@ describe('DELETE /api/v1/grupos-sanguineos/:id', () => {
     vi.mocked(prisma.grupoSanguineo.update).mockResolvedValue({
       ...mockGrupo,
       deletedAt: new Date(),
-      deletedById: 1
     })
 
     const res = await request(app)
@@ -319,7 +303,7 @@ describe('DELETE /api/v1/grupos-sanguineos/:id', () => {
     })
     expect(prisma.grupoSanguineo.update).toHaveBeenCalledWith({
       where: { id: 1 },
-      data: { deletedAt: expect.any(Date), deletedById: 1 }
+      data: { deletedAt: expect.any(Date) }
     })
   })
 
