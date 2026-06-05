@@ -32,8 +32,19 @@ export async function count(filters: { dni?: string }) {
   })
 }
 
-export async function findByDni(dni: string) {
+export async function findByDni(dni: string, excludeId?: number) {
+  if (excludeId !== undefined) {
+    return prisma.persona.findFirst({
+      where: { dni, NOT: { id: excludeId }, deletedAt: null },
+    })
+  }
   return prisma.persona.findUnique({ where: { dni } })
+}
+
+export async function findById(id: number) {
+  return prisma.persona.findFirst({
+    where: { id, deletedAt: null },
+  })
 }
 
 export async function findGrupoSanguineoById(id: number) {
@@ -60,6 +71,32 @@ export async function create(data: {
       telefono: data.telefono,
       grupoSanguineoId: data.grupoSanguineoId,
       createdById: data.createdById,
+    },
+    include: { grupoSanguineo: true },
+  })
+}
+
+export async function update(id: number, data: {
+  dni: string
+  nombre: string
+  apellido: string
+  fechaNacimiento: Date
+  direccion: string
+  telefono: string
+  grupoSanguineoId: number
+  updatedById: number
+}) {
+  return prisma.persona.update({
+    where: { id },
+    data: {
+      dni: data.dni,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      fechaNacimiento: data.fechaNacimiento,
+      direccion: data.direccion,
+      telefono: data.telefono,
+      grupoSanguineoId: data.grupoSanguineoId,
+      updatedById: data.updatedById,
     },
     include: { grupoSanguineo: true },
   })

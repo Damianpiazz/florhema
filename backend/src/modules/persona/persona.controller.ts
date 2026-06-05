@@ -1,6 +1,13 @@
 import type { Request, Response, NextFunction } from 'express'
 
-import { personaQuerySchema, listarPersonasResponseSchema, crearPersonaSchema, crearPersonaResponseSchema } from '@/modules/persona/persona.schema'
+import {
+  personaQuerySchema,
+  listarPersonasResponseSchema,
+  crearPersonaSchema,
+  crearPersonaResponseSchema,
+  actualizarPersonaSchema,
+  actualizarPersonaResponseSchema,
+} from '@/modules/persona/persona.schema'
 import * as personaService from '@/modules/persona/persona.service'
 import { successResponse } from '@/utils/api-response'
 
@@ -107,6 +114,77 @@ export async function create(req: Request, res: Response, next: NextFunction) {
     const item = await personaService.crear(data, req.user!.id)
     const validated = crearPersonaResponseSchema.parse({ item })
     res.status(201).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}:
+ *   put:
+ *     tags:
+ *       - Personas
+ *     summary: Actualizar una persona
+ *     description: Actualiza los datos de una persona existente. Requiere autenticación.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la persona
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - dni
+ *               - nombre
+ *               - apellido
+ *               - fechaNacimiento
+ *               - direccion
+ *               - telefono
+ *               - grupoSanguineoId
+ *             properties:
+ *               dni:
+ *                 type: string
+ *               nombre:
+ *                 type: string
+ *               apellido:
+ *                 type: string
+ *               fechaNacimiento:
+ *                 type: string
+ *                 format: date
+ *               direccion:
+ *                 type: string
+ *               telefono:
+ *                 type: string
+ *               grupoSanguineoId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Persona actualizada exitosamente
+ *       400:
+ *         description: Error de validación (Zod)
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada o grupo sanguíneo no encontrado
+ *       409:
+ *         description: DNI duplicado
+ */
+export async function update(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const data = actualizarPersonaSchema.parse(req.body)
+    const item = await personaService.actualizar(id, data, req.user!.id)
+    const validated = actualizarPersonaResponseSchema.parse({ item })
+    res.status(200).json(successResponse(validated))
   } catch (err) {
     next(err)
   }
