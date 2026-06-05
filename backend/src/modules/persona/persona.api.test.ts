@@ -41,6 +41,24 @@ const mockCreatedPersona = {
   grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
 }
 
+const mockUpdatedPersona = {
+  id: 1,
+  dni: '12345678',
+  nombre: 'Juan Carlos',
+  apellido: 'Pérez',
+  fechaNacimiento: new Date('1990-05-15'),
+  direccion: 'Nueva dirección 456',
+  telefono: '1112345678',
+  grupoSanguineoId: 2,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+  createdById: null,
+  updatedById: 1,
+  deletedById: null,
+  grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
+}
+
 const mockSession = {
   id: 1,
   userId: 1,
@@ -63,7 +81,9 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       count: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
     grupoSanguineo: {
       findUnique: vi.fn(),
@@ -278,6 +298,166 @@ describe('POST /api/v1/personas', () => {
         fechaNacimiento: '1985-10-20',
         direccion: 'Calle Falsa 456',
         telefono: '1198765432',
+        grupoSanguineoId: 2,
+      })
+
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('PUT /api/v1/personas/:id', () => {
+  it('debe responder 200 al actualizar una persona exitosamente', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValueOnce(mockPersonas[0])
+    vi.mocked(prisma.persona.findFirst).mockResolvedValueOnce(null)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue({
+      id: 2,
+      tipo: 'A',
+      factorRh: 'POSITIVO',
+      deletedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdById: null,
+      updatedById: null,
+      deletedById: null,
+    })
+    vi.mocked(prisma.persona.update).mockResolvedValue(mockUpdatedPersona)
+
+    const res = await request(app)
+      .put('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '12345678',
+        nombre: 'Juan Carlos',
+        apellido: 'Pérez',
+        fechaNacimiento: '1990-05-15',
+        direccion: 'Nueva dirección 456',
+        telefono: '1112345678',
+        grupoSanguineoId: 2,
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        item: {
+          id: 1,
+          dni: '12345678',
+          nombre: 'Juan Carlos',
+          apellido: 'Pérez',
+          fechaNacimiento: '1990-05-15T00:00:00.000Z',
+          direccion: 'Nueva dirección 456',
+          telefono: '1112345678',
+          grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
+        },
+      },
+    })
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .put('/api/v1/personas/999')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '87654321',
+        nombre: 'María',
+        apellido: 'García',
+        fechaNacimiento: '1985-10-20',
+        direccion: 'Calle Falsa 456',
+        telefono: '1198765432',
+        grupoSanguineoId: 2,
+      })
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Persona no encontrada',
+    })
+  })
+
+  it('debe responder 409 cuando el DNI pertenece a otra persona', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValueOnce(mockPersonas[0])
+    vi.mocked(prisma.persona.findFirst).mockResolvedValueOnce(mockPersonas[0])
+
+    const res = await request(app)
+      .put('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '87654321',
+        nombre: 'María',
+        apellido: 'García',
+        fechaNacimiento: '1985-10-20',
+        direccion: 'Calle Falsa 456',
+        telefono: '1198765432',
+        grupoSanguineoId: 2,
+      })
+
+    expect(res.status).toBe(409)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'El DNI ya pertenece a otra persona',
+    })
+  })
+
+  it('debe responder 404 cuando el grupo sanguíneo no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValueOnce(mockPersonas[0])
+    vi.mocked(prisma.persona.findFirst).mockResolvedValueOnce(null)
+    vi.mocked(prisma.grupoSanguineo.findUnique).mockResolvedValue(null)
+
+    const res = await request(app)
+      .put('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+      .send({
+        dni: '12345678',
+        nombre: 'Juan Carlos',
+        apellido: 'Pérez',
+        fechaNacimiento: '1990-05-15',
+        direccion: 'Nueva dirección 456',
+        telefono: '1112345678',
+        grupoSanguineoId: 999,
+      })
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'El grupo sanguíneo indicado no existe',
+    })
+  })
+
+  it('debe responder 400 con datos inválidos', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+
+    const res = await request(app)
+      .put('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+      .send({ dni: '' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app)
+      .put('/api/v1/personas/1')
+      .send({
+        dni: '12345678',
+        nombre: 'Juan Carlos',
+        apellido: 'Pérez',
+        fechaNacimiento: '1990-05-15',
+        direccion: 'Nueva dirección 456',
+        telefono: '1112345678',
         grupoSanguineoId: 2,
       })
 
