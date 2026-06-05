@@ -30,4 +30,22 @@ export const listarPersonasResponseSchema = z.object({
   offset: z.number(),
 })
 
+export const crearPersonaSchema = z.object({
+  dni: z
+    .string()
+    .min(7, 'El DNI debe tener al menos 7 caracteres')
+    .max(10, 'El DNI debe tener como máximo 10 caracteres'),
+  nombre: z.string().min(1, 'El nombre es requerido'),
+  apellido: z.string().min(1, 'El apellido es requerido'),
+  fechaNacimiento: z.coerce.date().refine((v) => !Number.isNaN(v.getTime()), 'Fecha de nacimiento inválida'),
+  direccion: z.string().min(1, 'La dirección es requerida'),
+  telefono: z.string().min(1, 'El teléfono es requerido'),
+  grupoSanguineoId: z.number().int().positive('El grupo sanguíneo es requerido'),
+})
+
+export const crearPersonaResponseSchema = z.object({
+  item: personaResponseSchema,
+})
+
 export type PersonaResponse = z.infer<typeof personaResponseSchema>
+export type CrearPersonaInput = z.infer<typeof crearPersonaSchema>
