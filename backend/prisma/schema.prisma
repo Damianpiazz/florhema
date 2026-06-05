@@ -28,59 +28,6 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  createdById Int?
-  createdBy   User? @relation("UserCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("UserUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("UserDeletedBy", fields: [deletedById], references: [id])
-
-  createdByUsers User[] @relation("UserCreatedBy")
-  updatedByUsers User[] @relation("UserUpdatedBy")
-  deletedByUsers User[] @relation("UserDeletedBy")
-
-  // Created relations
-  createdGruposSanguineos                GrupoSanguineo[]              @relation("GrupoSanguineoCreatedBy")
-  createdResultadosSerologia             ResultadoSerologia[]          @relation("ResultadoSerologiaCreatedBy")
-  createdResultadosCoombs                ResultadoCoombs[]             @relation("ResultadoCoombsCreatedBy")
-  createdCompatibilidadesTransfusionales CompatibilidadTransfusional[] @relation("CompatibilidadTransfusionalCreatedBy")
-  createdPersonas                        Persona[]                     @relation("PersonaCreatedBy")
-  createdDonantes                        Donante[]                     @relation("DonanteCreatedBy")
-  createdDonaciones                      Donacion[]                    @relation("DonacionCreatedBy")
-  createdPacientes                       Paciente[]                    @relation("PacienteCreatedBy")
-  createdTransfusiones                   Transfusion[]                 @relation("TransfusionCreatedBy")
-  createdGestantes                       Gestante[]                    @relation("GestanteCreatedBy")
-  createdEstudiosGestante                EstudioGestante[]             @relation("EstudioGestanteCreatedBy")
-  createdRecienNacidos                   RecienNacido[]                @relation("RecienNacidoCreatedBy")
-
-  // Updated relations
-  updatedGruposSanguineos                GrupoSanguineo[]              @relation("GrupoSanguineoUpdatedBy")
-  updatedResultadosSerologia             ResultadoSerologia[]          @relation("ResultadoSerologiaUpdatedBy")
-  updatedResultadosCoombs                ResultadoCoombs[]             @relation("ResultadoCoombsUpdatedBy")
-  updatedCompatibilidadesTransfusionales CompatibilidadTransfusional[] @relation("CompatibilidadTransfusionalUpdatedBy")
-  updatedPersonas                        Persona[]                     @relation("PersonaUpdatedBy")
-  updatedDonantes                        Donante[]                     @relation("DonanteUpdatedBy")
-  updatedDonaciones                      Donacion[]                    @relation("DonacionUpdatedBy")
-  updatedPacientes                       Paciente[]                    @relation("PacienteUpdatedBy")
-  updatedTransfusiones                   Transfusion[]                 @relation("TransfusionUpdatedBy")
-  updatedGestantes                       Gestante[]                    @relation("GestanteUpdatedBy")
-  updatedEstudiosGestante                EstudioGestante[]             @relation("EstudioGestanteUpdatedBy")
-  updatedRecienNacidos                   RecienNacido[]                @relation("RecienNacidoUpdatedBy")
-
-  // Deleted relations
-  deletedGruposSanguineos                GrupoSanguineo[]              @relation("GrupoSanguineoDeletedBy")
-  deletedResultadosSerologia             ResultadoSerologia[]          @relation("ResultadoSerologiaDeletedBy")
-  deletedResultadosCoombs                ResultadoCoombs[]             @relation("ResultadoCoombsDeletedBy")
-  deletedCompatibilidadesTransfusionales CompatibilidadTransfusional[] @relation("CompatibilidadTransfusionalDeletedBy")
-  deletedPersonas                        Persona[]                     @relation("PersonaDeletedBy")
-  deletedDonantes                        Donante[]                     @relation("DonanteDeletedBy")
-  deletedDonaciones                      Donacion[]                    @relation("DonacionDeletedBy")
-  deletedPacientes                       Paciente[]                    @relation("PacienteDeletedBy")
-  deletedTransfusiones                   Transfusion[]                 @relation("TransfusionDeletedBy")
-  deletedGestantes                       Gestante[]                    @relation("GestanteDeletedBy")
-  deletedEstudiosGestante                EstudioGestante[]             @relation("EstudioGestanteDeletedBy")
-  deletedRecienNacidos                   RecienNacido[]                @relation("RecienNacidoDeletedBy")
-
   sessions  Session[]
   auditLogs AuditLog[]
 }
@@ -120,13 +67,6 @@ model GrupoSanguineo {
   donantesCompatibilidad   CompatibilidadTransfusional[] @relation("DonanteGrupo")
   receptoresCompatibilidad CompatibilidadTransfusional[] @relation("ReceptorGrupo")
 
-  createdById Int?
-  createdBy   User? @relation("GrupoSanguineoCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("GrupoSanguineoUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("GrupoSanguineoDeletedBy", fields: [deletedById], references: [id])
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -145,13 +85,6 @@ model ResultadoSerologia {
   donacionId Int      @unique
   donacion   Donacion @relation(fields: [donacionId], references: [id])
 
-  createdById Int?
-  createdBy   User? @relation("ResultadoSerologiaCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("ResultadoSerologiaUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("ResultadoSerologiaDeletedBy", fields: [deletedById], references: [id])
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -165,13 +98,6 @@ model ResultadoCoombs {
   transfusion     Transfusion?
   estudioGestante EstudioGestante?
   recienNacido    RecienNacido?
-
-  createdById Int?
-  createdBy   User? @relation("ResultadoCoombsCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("ResultadoCoombsUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("ResultadoCoombsDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -189,13 +115,6 @@ model CompatibilidadTransfusional {
   receptorGrupo   GrupoSanguineo @relation("ReceptorGrupo", fields: [receptorGrupoId], references: [id])
 
   transfusion Transfusion?
-
-  createdById Int?
-  createdBy   User? @relation("CompatibilidadTransfusionalCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("CompatibilidadTransfusionalUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("CompatibilidadTransfusionalDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -222,13 +141,6 @@ model Persona {
   gestante     Gestante?
   recienNacido RecienNacido?
 
-  createdById Int?
-  createdBy   User? @relation("PersonaCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("PersonaUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("PersonaDeletedBy", fields: [deletedById], references: [id])
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -244,13 +156,6 @@ model Donante {
   persona         Persona       @relation(fields: [personaId], references: [id])
   semaforoAptitud EstadoAptitud @default(VERDE)
   donaciones      Donacion[]
-
-  createdById Int?
-  createdBy   User? @relation("DonanteCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("DonanteUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("DonanteDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -269,13 +174,6 @@ model Donacion {
   tipoDonacion    TipoDonacion
 
   resultadoSerologia ResultadoSerologia?
-
-  createdById Int?
-  createdBy   User? @relation("DonacionCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("DonacionUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("DonacionDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -303,13 +201,6 @@ model Paciente {
   persona       Persona       @relation(fields: [personaId], references: [id])
   transfusiones Transfusion[]
 
-  createdById Int?
-  createdBy   User? @relation("PacienteCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("PacienteUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("PacienteDeletedBy", fields: [deletedById], references: [id])
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -329,13 +220,6 @@ model Transfusion {
 
   resultadoCoombsId Int?             @unique
   resultadoCoombs   ResultadoCoombs? @relation(fields: [resultadoCoombsId], references: [id])
-
-  createdById Int?
-  createdBy   User? @relation("TransfusionCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("TransfusionUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("TransfusionDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -361,13 +245,6 @@ model Gestante {
   estudios                EstudioGestante[]
   recienNacidos           RecienNacido[]
 
-  createdById Int?
-  createdBy   User? @relation("GestanteCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("GestanteUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("GestanteDeletedBy", fields: [deletedById], references: [id])
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -383,13 +260,6 @@ model EstudioGestante {
 
   pruebaCoombsIndirectaId Int             @unique
   pruebaCoombsIndirecta   ResultadoCoombs @relation(fields: [pruebaCoombsIndirectaId], references: [id])
-
-  createdById Int?
-  createdBy   User? @relation("EstudioGestanteCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("EstudioGestanteUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("EstudioGestanteDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -414,13 +284,6 @@ model RecienNacido {
 
   pruebaCoombsDirectaId Int             @unique
   pruebaCoombsDirecta   ResultadoCoombs @relation(fields: [pruebaCoombsDirectaId], references: [id])
-
-  createdById Int?
-  createdBy   User? @relation("RecienNacidoCreatedBy", fields: [createdById], references: [id])
-  updatedById Int?
-  updatedBy   User? @relation("RecienNacidoUpdatedBy", fields: [updatedById], references: [id])
-  deletedById Int?
-  deletedBy   User? @relation("RecienNacidoDeletedBy", fields: [deletedById], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

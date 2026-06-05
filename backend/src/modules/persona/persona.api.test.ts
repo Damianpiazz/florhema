@@ -16,9 +16,6 @@ const mockPersonas = [
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    createdById: null,
-    updatedById: null,
-    deletedById: null,
     grupoSanguineo: { id: 1, tipo: 'O', factorRh: 'POSITIVO' },
   },
 ]
@@ -35,9 +32,6 @@ const mockCreatedPersona = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  createdById: 1,
-  updatedById: null,
-  deletedById: null,
   grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
 }
 
@@ -53,9 +47,6 @@ const mockUpdatedPersona = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  createdById: null,
-  updatedById: 1,
-  deletedById: null,
   grupoSanguineo: { id: 2, tipo: 'A', factorRh: 'POSITIVO' },
 }
 
@@ -209,9 +200,6 @@ describe('POST /api/v1/personas', () => {
       deletedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdById: null,
-      updatedById: null,
-      deletedById: null,
     })
     vi.mocked(prisma.persona.create).mockResolvedValue(mockCreatedPersona)
 
@@ -342,9 +330,6 @@ describe('PUT /api/v1/personas/:id', () => {
       deletedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdById: null,
-      updatedById: null,
-      deletedById: null,
     })
     vi.mocked(prisma.persona.update).mockResolvedValue(mockUpdatedPersona)
 
@@ -500,7 +485,6 @@ describe('DELETE /api/v1/personas/:id', () => {
     vi.mocked(prisma.persona.update).mockResolvedValue({
       ...mockPersonas[0],
       deletedAt: new Date(),
-      deletedById: 1,
     })
 
     const res = await request(app)

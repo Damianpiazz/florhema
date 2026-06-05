@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import type { Request, Response, NextFunction } from 'express'
 
 import { AUTH } from '@/config/auth'
+import { runWithAuditContext } from '@/lib/audit-context'
 import { prisma } from '@/lib/prisma'
 import { errorResponse } from '@/utils/api-response'
 
@@ -33,7 +34,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     req.user = session.user
-    next()
+    runWithAuditContext(session.user.id, async () => {
+      next()
+    })
   } catch (err) {
     next(err)
   }

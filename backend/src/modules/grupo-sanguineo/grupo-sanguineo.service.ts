@@ -11,7 +11,7 @@ export async function listar() {
   return grupos.map(toGrupoSanguineoResponse)
 }
 
-export async function eliminar(id: number, deletedById: number) {
+export async function eliminar(id: number) {
   const grupo = await grupoSanguineoRepository.findById(id)
 
   if (!grupo || grupo.deletedAt) {
@@ -24,12 +24,12 @@ export async function eliminar(id: number, deletedById: number) {
     throw new AppError(409, 'No se puede eliminar el grupo porque tiene personas asociadas')
   }
 
-  await grupoSanguineoRepository.softDelete(id, deletedById)
+  await grupoSanguineoRepository.softDelete(id)
 
   return { message: 'Grupo sanguíneo eliminado correctamente' }
 }
 
-export async function actualizar(id: number, data: ActualizarGrupoInput, userId: number) {
+export async function actualizar(id: number, data: ActualizarGrupoInput) {
   const grupo = await grupoSanguineoRepository.findById(id)
 
   if (!grupo || grupo.deletedAt) {
@@ -42,7 +42,7 @@ export async function actualizar(id: number, data: ActualizarGrupoInput, userId:
     throw new AppError(409, 'Ya existe un grupo con esa combinación de tipo y factor Rh')
   }
 
-  const updated = await grupoSanguineoRepository.update(id, data, userId)
+  const updated = await grupoSanguineoRepository.update(id, data)
 
   return toGrupoSanguineoItemResponse(updated)
 }
