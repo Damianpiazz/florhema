@@ -111,7 +111,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const data = crearPersonaSchema.parse(req.body)
-    const item = await personaService.crear(data, req.user!.id)
+    const item = await personaService.crear(data)
     const validated = crearPersonaResponseSchema.parse({ item })
     res.status(201).json(successResponse(validated))
   } catch (err) {
@@ -182,7 +182,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
     const data = actualizarPersonaSchema.parse(req.body)
-    const item = await personaService.actualizar(id, data, req.user!.id)
+    const item = await personaService.actualizar(id, data)
     const validated = actualizarPersonaResponseSchema.parse({ item })
     res.status(200).json(successResponse(validated))
   } catch (err) {
@@ -222,7 +222,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
 export async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)
-    const result = await personaService.eliminar(id, req.user!.id)
+    const result = await personaService.eliminar(id)
     res.status(200).json(successResponse(result))
   } catch (err) {
     next(err)
