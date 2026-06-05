@@ -22,21 +22,20 @@ export async function findByTipoFactorRh(tipo: string, factorRh: string, exclude
   })
 }
 
-export async function update(id: number, data: { tipo: string; factorRh: string }, userId: number) {
+export async function update(id: number, data: { tipo: string; factorRh: string }) {
   return prisma.grupoSanguineo.update({
     where: { id },
     data: {
       tipo: data.tipo as $Enums.TipoABO,
       factorRh: data.factorRh as $Enums.FactorRh,
-      updatedById: userId
     }
   })
 }
 
-export async function softDelete(id: number, deletedById: number) {
+export async function softDelete(id: number) {
   return prisma.grupoSanguineo.update({
     where: { id },
-    data: { deletedAt: new Date(), deletedById }
+    data: { deletedAt: new Date() }
   })
 }
 
