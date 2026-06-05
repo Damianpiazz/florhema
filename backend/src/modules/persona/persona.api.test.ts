@@ -74,6 +74,21 @@ const mockSession = {
   },
 }
 
+const mockUserSession = {
+  id: 2,
+  userId: 2,
+  tokenHash: 'user_token_hash',
+  createdAt: new Date(),
+  expiresAt: new Date(Date.now() + 86400000),
+  revokedAt: null,
+  user: {
+    id: 2,
+    email: 'user@hospital.com',
+    name: 'User',
+    role: 'USER' as const,
+  },
+}
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     session: { findUnique: vi.fn() },
@@ -87,6 +102,15 @@ vi.mock('@/lib/prisma', () => ({
     },
     grupoSanguineo: {
       findUnique: vi.fn(),
+    },
+    donante: {
+      count: vi.fn(),
+    },
+    paciente: {
+      count: vi.fn(),
+    },
+    gestante: {
+      count: vi.fn(),
     },
   },
 }))
@@ -462,5 +486,94 @@ describe('PUT /api/v1/personas/:id', () => {
       })
 
     expect(res.status).toBe(401)
+  })
+})
+
+describe('DELETE /api/v1/personas/:id', () => {
+  it('debe responder 200 al eliminar una persona exitosamente', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.donante.count).mockResolvedValue(0)
+    vi.mocked(prisma.paciente.count).mockResolvedValue(0)
+    vi.mocked(prisma.gestante.count).mockResolvedValue(0)
+    vi.mocked(prisma.persona.update).mockResolvedValue({
+      ...mockPersonas[0],
+      deletedAt: new Date(),
+      deletedById: 1,
+    })
+
+    const res = await request(app)
+      .delete('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({
+      success: true,
+      data: { message: 'Persona eliminada correctamente' },
+    })
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .delete('/api/v1/personas/999')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Persona no encontrada',
+    })
+  })
+
+  it('debe responder 409 cuando la persona tiene vinculaciones activas', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.donante.count).mockResolvedValue(1)
+    vi.mocked(prisma.paciente.count).mockResolvedValue(0)
+    vi.mocked(prisma.gestante.count).mockResolvedValue(0)
+
+    const res = await request(app)
+      .delete('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(409)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'No se puede eliminar la persona porque tiene un donante, paciente o gestante activo',
+    })
+  })
+
+  it('debe responder 403 cuando el usuario no es ADMIN', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockUserSession)
+
+    const res = await request(app)
+      .delete('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(403)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Acción no permitida. Se requiere rol ADMIN',
+    })
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app).delete('/api/v1/personas/1')
+
+    expect(res.status).toBe(401)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'No autenticado',
+    })
   })
 })
