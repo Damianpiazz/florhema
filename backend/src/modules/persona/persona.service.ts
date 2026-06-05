@@ -65,3 +65,18 @@ export async function actualizar(id: number, data: ActualizarPersonaInput, userI
 
   return toPersonaResponse(persona)
 }
+
+export async function eliminar(id: number, deletedById: number) {
+  const existente = await personaRepository.findById(id)
+  if (!existente) {
+    throw new AppError(404, 'Persona no encontrada')
+  }
+
+  const vinculaciones = await personaRepository.countVinculacionesActivas(id)
+  if (vinculaciones > 0) {
+    throw new AppError(409, 'No se puede eliminar la persona porque tiene un donante, paciente o gestante activo')
+  }
+
+  await personaRepository.softDelete(id, deletedById)
+  return { message: 'Persona eliminada correctamente' }
+}
