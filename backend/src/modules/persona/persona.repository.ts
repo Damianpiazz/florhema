@@ -59,7 +59,6 @@ export async function create(data: {
   direccion: string
   telefono: string
   grupoSanguineoId: number
-  createdById: number
 }) {
   return prisma.persona.create({
     data: {
@@ -70,7 +69,6 @@ export async function create(data: {
       direccion: data.direccion,
       telefono: data.telefono,
       grupoSanguineoId: data.grupoSanguineoId,
-      createdById: data.createdById,
     },
     include: { grupoSanguineo: true },
   })
@@ -84,7 +82,6 @@ export async function update(id: number, data: {
   direccion: string
   telefono: string
   grupoSanguineoId: number
-  updatedById: number
 }) {
   return prisma.persona.update({
     where: { id },
@@ -96,16 +93,15 @@ export async function update(id: number, data: {
       direccion: data.direccion,
       telefono: data.telefono,
       grupoSanguineoId: data.grupoSanguineoId,
-      updatedById: data.updatedById,
     },
     include: { grupoSanguineo: true },
   })
 }
 
-export async function softDelete(id: number, deletedById: number) {
+export async function softDelete(id: number) {
   return prisma.persona.update({
     where: { id },
-    data: { deletedAt: new Date(), deletedById },
+    data: { deletedAt: new Date() },
   })
 }
 
