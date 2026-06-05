@@ -189,3 +189,42 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     next(err)
   }
 }
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}:
+ *   delete:
+ *     tags:
+ *       - Personas
+ *     summary: Eliminar una persona (soft-delete)
+ *     description: Eliminación lógica de una persona. Requiere rol ADMIN.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la persona
+ *     responses:
+ *       200:
+ *         description: Persona eliminada correctamente
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Acción no permitida. Se requiere rol ADMIN
+ *       404:
+ *         description: Persona no encontrada
+ *       409:
+ *         description: Persona con donante/paciente/gestante activo
+ */
+export async function remove(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const result = await personaService.eliminar(id, req.user!.id)
+    res.status(200).json(successResponse(result))
+  } catch (err) {
+    next(err)
+  }
+}

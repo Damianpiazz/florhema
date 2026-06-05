@@ -101,3 +101,19 @@ export async function update(id: number, data: {
     include: { grupoSanguineo: true },
   })
 }
+
+export async function softDelete(id: number, deletedById: number) {
+  return prisma.persona.update({
+    where: { id },
+    data: { deletedAt: new Date(), deletedById },
+  })
+}
+
+export async function countVinculacionesActivas(id: number) {
+  const [donante, paciente, gestante] = await Promise.all([
+    prisma.donante.count({ where: { personaId: id, deletedAt: null } }),
+    prisma.paciente.count({ where: { personaId: id, deletedAt: null } }),
+    prisma.gestante.count({ where: { personaId: id, deletedAt: null } }),
+  ])
+  return donante + paciente + gestante
+}
