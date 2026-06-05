@@ -47,5 +47,12 @@ export const crearPersonaResponseSchema = z.object({
   item: personaResponseSchema,
 })
 
+export const actualizarPersonaSchema = crearPersonaSchema
+
+export const actualizarPersonaResponseSchema = z.object({
+  item: personaResponseSchema,
+})
+
 export type PersonaResponse = z.infer<typeof personaResponseSchema>
 export type CrearPersonaInput = z.infer<typeof crearPersonaSchema>
+export type ActualizarPersonaInput = z.infer<typeof actualizarPersonaSchema>
