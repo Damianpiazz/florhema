@@ -113,3 +113,102 @@ export async function countVinculacionesActivas(id: number) {
   ])
   return donante + paciente + gestante
 }
+
+// =========================
+// DETALLE (GET /:id)
+// =========================
+
+export async function findByIdWithRoles(id: number) {
+  return prisma.persona.findFirst({
+    where: { id, deletedAt: null },
+    include: {
+      grupoSanguineo: true,
+      donante: true,
+      paciente: true,
+      gestante: true,
+    },
+  })
+}
+
+// =========================
+// DONACIONES
+// =========================
+
+export async function findDonacionesByPersonaId(id: number, limit?: number, offset?: number) {
+  return prisma.donacion.findMany({
+    where: { donante: { personaId: id, deletedAt: null }, deletedAt: null },
+    include: { resultadoSerologia: true },
+    orderBy: { fecha: 'desc' },
+    take: limit,
+    skip: offset,
+  })
+}
+
+export async function countDonacionesByPersonaId(id: number) {
+  return prisma.donacion.count({
+    where: { donante: { personaId: id, deletedAt: null }, deletedAt: null },
+  })
+}
+
+// =========================
+// TRANSFUSIONES
+// =========================
+
+export async function findTransfusionesByPersonaId(id: number, limit?: number, offset?: number) {
+  return prisma.transfusion.findMany({
+    where: { paciente: { personaId: id, deletedAt: null }, deletedAt: null },
+    include: {
+      compatibilidad: { include: { donanteGrupo: true, receptorGrupo: true } },
+      resultadoCoombs: true,
+    },
+    orderBy: { fecha: 'desc' },
+    take: limit,
+    skip: offset,
+  })
+}
+
+export async function countTransfusionesByPersonaId(id: number) {
+  return prisma.transfusion.count({
+    where: { paciente: { personaId: id, deletedAt: null }, deletedAt: null },
+  })
+}
+
+// =========================
+// ESTUDIOS GESTANTE
+// =========================
+
+export async function findEstudiosByPersonaId(id: number, limit?: number, offset?: number) {
+  return prisma.estudioGestante.findMany({
+    where: { gestante: { personaId: id, deletedAt: null }, deletedAt: null },
+    include: { pruebaCoombsIndirecta: true },
+    orderBy: { fecha: 'desc' },
+    take: limit,
+    skip: offset,
+  })
+}
+
+export async function countEstudiosByPersonaId(id: number) {
+  return prisma.estudioGestante.count({
+    where: { gestante: { personaId: id, deletedAt: null }, deletedAt: null },
+  })
+}
+
+// =========================
+// RECIEN NACIDOS
+// =========================
+
+export async function findRecienNacidosByPersonaId(id: number, limit?: number, offset?: number) {
+  return prisma.recienNacido.findMany({
+    where: { gestante: { personaId: id, deletedAt: null }, deletedAt: null },
+    include: { pruebaCoombsDirecta: true },
+    orderBy: { id: 'desc' },
+    take: limit,
+    skip: offset,
+  })
+}
+
+export async function countRecienNacidosByPersonaId(id: number) {
+  return prisma.recienNacido.count({
+    where: { gestante: { personaId: id, deletedAt: null }, deletedAt: null },
+  })
+}

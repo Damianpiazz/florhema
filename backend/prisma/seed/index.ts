@@ -2,12 +2,14 @@ import { prisma } from '@/lib/prisma'
 import { seedAdmin } from './admin.seed'
 import { seedGrupoSanguineo } from './grupo-sanguineo.seed'
 import { seedPersona } from './persona.seed'
+import { seedActividad } from './actividad.seed'
 
 async function main() {
   console.log('Corriendo seeds...')
   await seedAdmin()
   await seedGrupoSanguineo()
-  await seedPersona(3000) 
+  await seedPersona(3000)
+  await seedActividad()
   console.log('Seeds completados.')
 }
 

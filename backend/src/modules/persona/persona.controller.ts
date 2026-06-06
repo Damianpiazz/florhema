@@ -2,11 +2,18 @@ import type { Request, Response, NextFunction } from 'express'
 
 import {
   personaQuerySchema,
+  paginatedQuerySchema,
   listarPersonasResponseSchema,
   crearPersonaSchema,
   crearPersonaResponseSchema,
   actualizarPersonaSchema,
   actualizarPersonaResponseSchema,
+  personaDetalleResponseSchema,
+  listarDonacionesResponseSchema,
+  listarTransfusionesResponseSchema,
+  listarEstudiosGestanteResponseSchema,
+  listarRecienNacidosResponseSchema,
+  listarActividadResponseSchema,
 } from '@/modules/persona/persona.schema'
 import * as personaService from '@/modules/persona/persona.service'
 import { successResponse } from '@/utils/api-response'
@@ -224,6 +231,271 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
     const id = Number(req.params.id)
     const result = await personaService.eliminar(id)
     res.status(200).json(successResponse(result))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Obtener detalle de persona
+ *     description: Retorna datos de la persona, grupo sanguíneo y sus roles (donante/paciente/gestante).
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Detalle de persona
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function detalle(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const result = await personaService.obtenerDetalle(id)
+    const validated = personaDetalleResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}/donaciones:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Listar donaciones de una persona
+ *     description: Donaciones paginadas con resultado de serología.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Lista paginada de donaciones
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function listarDonaciones(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const query = paginatedQuerySchema.parse(req.query)
+    const result = await personaService.listarDonaciones(id, query)
+    const validated = listarDonacionesResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}/transfusiones:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Listar transfusiones de una persona
+ *     description: Transfusiones paginadas con compatibilidad y resultado Coombs.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Lista paginada de transfusiones
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function listarTransfusiones(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const query = paginatedQuerySchema.parse(req.query)
+    const result = await personaService.listarTransfusiones(id, query)
+    const validated = listarTransfusionesResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}/estudios-gestante:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Listar estudios gestacionales de una persona
+ *     description: Estudios gestacionales paginados con prueba Coombs indirecta.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Lista paginada de estudios gestacionales
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function listarEstudios(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const query = paginatedQuerySchema.parse(req.query)
+    const result = await personaService.listarEstudios(id, query)
+    const validated = listarEstudiosGestanteResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}/recien-nacidos:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Listar recién nacidos de una gestante
+ *     description: Recién nacidos paginados con prueba Coombs directa.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Lista paginada de recién nacidos
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function listarRecienNacidos(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const query = paginatedQuerySchema.parse(req.query)
+    const result = await personaService.listarRecienNacidos(id, query)
+    const validated = listarRecienNacidosResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/{id}/actividad:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Timeline unificado de actividad de una persona
+ *     description: Retorna donaciones, transfusiones, estudios gestacionales y recién nacidos mezclados y ordenados por fecha descendente.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Timeline paginado de actividad
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function listarActividad(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const query = paginatedQuerySchema.parse(req.query)
+    const result = await personaService.listarActividad(id, query)
+    const validated = listarActividadResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
   } catch (err) {
     next(err)
   }
