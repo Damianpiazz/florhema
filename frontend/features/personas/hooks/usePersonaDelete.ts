@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { extractErrorMessage } from '@/utils/error-utils'
 import { personasService } from '@/features/personas/personas-service'
 
 export function usePersonaDelete(onSuccess?: () => void) {
