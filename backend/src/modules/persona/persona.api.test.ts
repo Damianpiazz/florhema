@@ -103,6 +103,22 @@ vi.mock('@/lib/prisma', () => ({
     gestante: {
       count: vi.fn(),
     },
+    donacion: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    transfusion: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    estudioGestante: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    recienNacido: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
   },
 }))
 
@@ -559,5 +575,386 @@ describe('DELETE /api/v1/personas/:id', () => {
       success: false,
       error: 'No autenticado',
     })
+  })
+})
+
+// =========================
+// GET /api/v1/personas/:id (DETALLE)
+// =========================
+
+const mockPersonaWithRoles = {
+  ...mockPersonas[0],
+  donante: { id: 1, semaforoAptitud: 'VERDE' },
+  paciente: null,
+  gestante: null,
+}
+
+describe('GET /api/v1/personas/:id (detalle)', () => {
+  it('debe responder 200 con datos de persona y roles', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonaWithRoles)
+
+    const res = await request(app)
+      .get('/api/v1/personas/1')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data).toMatchObject({
+      id: 1,
+      dni: '12345678',
+      donante: { id: 1, semaforoAptitud: 'VERDE' },
+      paciente: null,
+      gestante: null,
+    })
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/personas/999')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Persona no encontrada',
+    })
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app).get('/api/v1/personas/1')
+
+    expect(res.status).toBe(401)
+  })
+})
+
+// =========================
+// GET /api/v1/personas/:id/donaciones
+// =========================
+
+const mockDonaciones = [
+  {
+    id: 1,
+    donanteId: 1,
+    fecha: new Date('2026-05-20'),
+    peso: 75,
+    tensionArterial: '120/80',
+    hemoglobina: 14.5,
+    tipoDonacion: 'VOLUNTARIA' as const,
+    reaccionAdversa: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    resultadoSerologia: { id: 1, hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+  },
+]
+
+describe('GET /api/v1/personas/:id/donaciones', () => {
+  it('debe responder 200 con lista paginada de donaciones', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.donacion.findMany).mockResolvedValue(mockDonaciones)
+    vi.mocked(prisma.donacion.count).mockResolvedValue(1)
+
+    const res = await request(app)
+      .get('/api/v1/personas/1/donaciones')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.items).toHaveLength(1)
+    expect(res.body.data.items[0]).toMatchObject({
+      id: 1,
+      tipoDonacion: 'VOLUNTARIA',
+      resultadoSerologia: { hiv: false },
+    })
+    expect(res.body.data.total).toBe(1)
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/personas/999/donaciones')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app).get('/api/v1/personas/1/donaciones')
+    expect(res.status).toBe(401)
+  })
+})
+
+// =========================
+// GET /api/v1/personas/:id/transfusiones
+// =========================
+
+const mockTransfusiones = [
+  {
+    id: 1,
+    pacienteId: 1,
+    fecha: new Date('2026-04-10'),
+    componente: 'GLOBULOS_ROJOS' as const,
+    cantidadUnidades: 2,
+    reaccionAdversa: null,
+    compatibilidadId: null,
+    resultadoCoombsId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    compatibilidad: {
+      id: 1,
+      compatible: true,
+      motivoIncompatibilidad: null,
+      donanteGrupo: { id: 1, tipo: 'O' as const, factorRh: 'NEGATIVO' as const },
+      receptorGrupo: { id: 2, tipo: 'O' as const, factorRh: 'POSITIVO' as const },
+    },
+    resultadoCoombs: null,
+  },
+]
+
+describe('GET /api/v1/personas/:id/transfusiones', () => {
+  it('debe responder 200 con lista paginada de transfusiones', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.transfusion.findMany).mockResolvedValue(mockTransfusiones)
+    vi.mocked(prisma.transfusion.count).mockResolvedValue(1)
+
+    const res = await request(app)
+      .get('/api/v1/personas/1/transfusiones')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.items).toHaveLength(1)
+    expect(res.body.data.items[0]).toMatchObject({
+      id: 1,
+      componente: 'GLOBULOS_ROJOS',
+      compatibilidad: { compatible: true },
+    })
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/personas/999/transfusiones')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+    const res = await request(app).get('/api/v1/personas/1/transfusiones')
+    expect(res.status).toBe(401)
+  })
+})
+
+// =========================
+// GET /api/v1/personas/:id/estudios-gestante
+// =========================
+
+const mockEstudios = [
+  {
+    id: 1,
+    gestanteId: 1,
+    fecha: new Date('2026-03-05'),
+    compatibilidadConyugal: 'Compatible',
+    estadoEstudio: 'PENDIENTE' as const,
+    pruebaCoombsIndirectaId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    pruebaCoombsIndirecta: { id: 1, tipo: 'INDIRECTO' as const, positivo: false },
+  },
+]
+
+describe('GET /api/v1/personas/:id/estudios-gestante', () => {
+  it('debe responder 200 con lista paginada de estudios', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.estudioGestante.findMany).mockResolvedValue(mockEstudios)
+    vi.mocked(prisma.estudioGestante.count).mockResolvedValue(1)
+
+    const res = await request(app)
+      .get('/api/v1/personas/1/estudios-gestante')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.items).toHaveLength(1)
+    expect(res.body.data.items[0]).toMatchObject({
+      id: 1,
+      estadoEstudio: 'PENDIENTE',
+      pruebaCoombsIndirecta: { positivo: false },
+    })
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/personas/999/estudios-gestante')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+    const res = await request(app).get('/api/v1/personas/1/estudios-gestante')
+    expect(res.status).toBe(401)
+  })
+})
+
+// =========================
+// GET /api/v1/personas/:id/recien-nacidos
+// =========================
+
+const mockRecienNacidos = [
+  {
+    id: 1,
+    personaId: 2,
+    gestanteId: 1,
+    pruebaCoombsDirectaId: 1,
+    createdAt: new Date('2026-02-01'),
+    updatedAt: new Date(),
+    deletedAt: null,
+    pruebaCoombsDirecta: { id: 1, tipo: 'DIRECTO' as const, positivo: true },
+  },
+]
+
+describe('GET /api/v1/personas/:id/recien-nacidos', () => {
+  it('debe responder 200 con lista paginada de recien nacidos', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.recienNacido.findMany).mockResolvedValue(mockRecienNacidos)
+    vi.mocked(prisma.recienNacido.count).mockResolvedValue(1)
+
+    const res = await request(app)
+      .get('/api/v1/personas/1/recien-nacidos')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.items).toHaveLength(1)
+    expect(res.body.data.items[0]).toMatchObject({
+      id: 1,
+      personaId: 2,
+      pruebaCoombsDirecta: { positivo: true },
+    })
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/personas/999/recien-nacidos')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+    const res = await request(app).get('/api/v1/personas/1/recien-nacidos')
+    expect(res.status).toBe(401)
+  })
+})
+
+// =========================
+// GET /api/v1/personas/:id/actividad
+// =========================
+
+describe('GET /api/v1/personas/:id/actividad', () => {
+  it('debe responder 200 con timeline mezclado y ordenado por fecha', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.donacion.findMany).mockResolvedValue(mockDonaciones)
+    vi.mocked(prisma.transfusion.findMany).mockResolvedValue(mockTransfusiones)
+    vi.mocked(prisma.estudioGestante.findMany).mockResolvedValue(mockEstudios)
+    vi.mocked(prisma.recienNacido.findMany).mockResolvedValue(mockRecienNacidos)
+
+    const res = await request(app)
+      .get('/api/v1/personas/1/actividad')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.items.length).toBeGreaterThan(0)
+    // items should be sorted by fecha descending
+    const items = res.body.data.items
+    for (let i = 1; i < items.length; i++) {
+      expect(new Date(items[i - 1].fecha).getTime()).toBeGreaterThanOrEqual(
+        new Date(items[i].fecha).getTime(),
+      )
+    }
+  })
+
+  it('debe responder 200 con actividad vacia cuando no hay registros', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(mockPersonas[0])
+    vi.mocked(prisma.donacion.findMany).mockResolvedValue([])
+    vi.mocked(prisma.transfusion.findMany).mockResolvedValue([])
+    vi.mocked(prisma.estudioGestante.findMany).mockResolvedValue([])
+    vi.mocked(prisma.recienNacido.findMany).mockResolvedValue([])
+
+    const res = await request(app)
+      .get('/api/v1/personas/1/actividad')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.items).toEqual([])
+    expect(res.body.data.total).toBe(0)
+  })
+
+  it('debe responder 404 cuando la persona no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.persona.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/personas/999/actividad')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+  })
+
+  it('debe responder 401 sin autenticacion', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+    const res = await request(app).get('/api/v1/personas/1/actividad')
+    expect(res.status).toBe(401)
   })
 })
