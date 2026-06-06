@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useAuth } from '@/features/auth/auth-context'
 import { usePathname, useRouter } from 'next/navigation'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -72,20 +72,19 @@ export default function ProtectedLayout({
                     .replace(/-/g, ' ')
                     .replace(/\b\w/g, (c) => c.toUpperCase())
                   const href = '/' + segments.slice(0, i + 1).join('/')
-
-                  if (i < segments.length - 1) {
-                    return (
-                      <BreadcrumbItem key={segment}>
-                        <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
-                        <BreadcrumbSeparator />
-                      </BreadcrumbItem>
-                    )
-                  }
+                  const isLast = i === segments.length - 1
 
                   return (
-                    <BreadcrumbItem key={segment}>
-                      <BreadcrumbPage>{label}</BreadcrumbPage>
-                    </BreadcrumbItem>
+                    <React.Fragment key={segment}>
+                      <BreadcrumbItem>
+                        {isLast ? (
+                          <BreadcrumbPage>{label}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                      {!isLast && <BreadcrumbSeparator />}
+                    </React.Fragment>
                   )
                 })
               )}
