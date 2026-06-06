@@ -1,9 +1,9 @@
 'use client'
 
 import { useReducer, useEffect, useState } from 'react'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { extractErrorMessage } from '@/utils/error-utils'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { formatGrupoSanguineo } from '@/lib/grupo-utils'
+import { formatGrupoSanguineo } from '@/utils/grupo-utils'
 import { Loader2 } from 'lucide-react'
 import {
   Dialog,
