@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { extractErrorMessage } from '@/utils/error-utils'
 import { loginSchema } from '@/features/auth/auth.schema'
 import { useAuth } from '@/features/auth/auth-context'
 
