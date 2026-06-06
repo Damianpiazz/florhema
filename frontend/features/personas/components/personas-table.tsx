@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   Search,
   Plus,
@@ -35,7 +36,8 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { formatGrupoSanguineo } from '@/lib/grupo-utils'
+import { formatGrupoSanguineo } from '@/utils/grupo-utils'
+import { formatDni } from '@/utils/formatters'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
 import type { Persona } from '@/features/personas/personas.schema'
 
@@ -77,7 +79,7 @@ export function PersonasTable({
     {
       accessorKey: 'dni',
       header: 'DNI',
-      cell: ({ getValue }) => <span className="font-bold">{getValue<string>()}</span>,
+      cell: ({ getValue }) => <span className="font-bold">{formatDni(getValue<string>())}</span>,
       enableHiding: false,
     },
     {
@@ -103,10 +105,12 @@ export function PersonasTable({
             <Pencil className="size-4" />
             <span className="sr-only">Editar</span>
           </Button>
-          <Button variant="ghost" size="icon">
-            <Eye className="size-4" />
-            <span className="sr-only">Ver detalle</span>
-          </Button>
+          <Link href={`/personas/${row.original.id}`}>
+            <Button variant="ghost" size="icon">
+              <Eye className="size-4" />
+              <span className="sr-only">Ver detalle</span>
+            </Button>
+          </Link>
           <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
             <Trash2 className="size-4 text-destructive" />
             <span className="sr-only">Eliminar</span>
