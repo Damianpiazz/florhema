@@ -1,6 +1,6 @@
 ---
 autor: Damián Piazza
-fecha: 2026-06-06
+fecha: 2026-06-08
 titulo: Listar Donaciones con filtros y paginación
 ---
 
@@ -34,18 +34,6 @@ Donacion (1) ── (0..1) ResultadoSerologia
 
 ### Contrato de API
 
-#### Nuevo módulo standalone: `/api/v1/donaciones`
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/v1/donaciones` | Lista paginada con filtros |
-| GET | `/api/v1/donaciones/:id` | Detalle de una donación |
-| POST | `/api/v1/donaciones` | Crear donación (TDD-015) |
-| PUT | `/api/v1/donaciones/:id` | Actualizar donación (TDD-016) |
-| DELETE | `/api/v1/donaciones/:id` | Eliminar donación (TDD-017) |
-
-**Nota**: En este TDD se implementa solo `GET /` y `GET /:id`. Los endpoints `POST`, `PUT`, `DELETE` se implementan en TDD-015, TDD-016 y TDD-017 respectivamente. Se mantiene `GET /personas/:id/donaciones` en el módulo persona para el detalle.
-
 #### `GET /api/v1/donaciones?donanteId=1&fechaDesde=2026-01-01&fechaHasta=2026-12-31&tipoDonacion=VOLUNTARIA&limit=20&offset=0`
 **Response 200:**
 ```json
@@ -72,6 +60,9 @@ Donacion (1) ── (0..1) ResultadoSerologia
 }
 ```
 
+#### `GET /api/v1/donaciones/:id`
+Misma estructura de item en `data.item`.
+
 ### Backend
 
 #### Estructura del Código
@@ -87,7 +78,6 @@ backend/src/modules/donacion/
 
 #### Repository
 ```typescript
-// findAll: Prisma query con where dinámico + include donante.persona + resultadoSerologia
 findAll(filters: {
   donanteId?: number
   fechaDesde?: Date
@@ -97,10 +87,8 @@ findAll(filters: {
   offset: number
 }) => Promise<Donacion[]>
 
-// count: Mismos filtros, sin paginación
 count(filters) => Promise<number>
 
-// findById: Con mismas includes
 findById(id: number) => Promise<Donacion | null>
 ```
 
@@ -109,12 +97,10 @@ findById(id: number) => Promise<Donacion | null>
 listar(params) {
   const limit = Math.min(params.limit ?? 20, 100)
   const offset = params.offset ?? 0
-
   const [items, total] = await Promise.all([
     repository.findAll({ ...params, limit, offset }),
     repository.count(params),
   ])
-
   return { items: items.map(toDonacionResponse), total, limit, offset }
 }
 
@@ -130,15 +116,13 @@ obtener(id) {
 list(req, res, next) {
   const query = donacionQuerySchema.parse(req.query)
   const result = await donacionService.listar(query)
-  const validated = listarDonacionesResponseSchema.parse(result)
-  res.status(200).json(successResponse(validated))
+  res.status(200).json(successResponse(result))
 }
 
 getById(req, res, next) {
   const id = Number(req.params.id)
   const result = await donacionService.obtener(id)
-  const validated = donacionResponseSchema.parse(result)
-  res.status(200).json(successResponse(validated))
+  res.status(200).json(successResponse({ item: result }))
 }
 ```
 
@@ -167,26 +151,6 @@ app/(protected)/
 - Serología: indicadores visuales positivos/negativos (check/cross icons en verde/rojo)
 - Paginación con `Pagination` de shadcn
 - Botón "Nueva donación" → abre Dialog con formulario (TDD-015)
-
-#### donaciones-service.ts
-```typescript
-async function listar(params: {
-  donanteId?: number
-  fechaDesde?: string
-  fechaHasta?: string
-  tipoDonacion?: string
-  limit?: number
-  offset?: number
-}) {
-  const { data } = await api.get('/donaciones', { params })
-  return parseListarDonacionesResponse(data)
-}
-
-async function obtener(id: number) {
-  const { data } = await api.get(`/donaciones/${id}`)
-  return parseDonacionResponse(data)
-}
-```
 
 #### Componentes shadcn requeridos
 Agregar con `npx shadcn add`:
