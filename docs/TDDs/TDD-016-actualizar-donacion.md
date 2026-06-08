@@ -1,6 +1,6 @@
 ---
 autor: Damián Piazza
-fecha: 2026-06-06
+fecha: 2026-06-08
 titulo: Actualizar Donación
 ---
 
@@ -9,7 +9,7 @@ titulo: Actualizar Donación
 ## Contexto de Negocio (PRD)
 
 ### Objetivo
-Permitir corregir datos de una donación existente, incluyendo la posibilidad de actualizar los resultados de serología. Si la serología cambia, se recalcula el semáforo del donante.
+Permitir corregir datos de una donación existente, incluyendo la posibilidad de actualizar los resultados de serología. La actualización **no** modifica el semáforo del donante; ese cálculo se realiza desde el módulo Donante.
 
 ### User Persona
 - **Nombre**: Técnico en Hemoterapia
@@ -23,7 +23,6 @@ Permitir corregir datos de una donación existente, incluyendo la posibilidad de
   - Si ya existe → se actualiza
   - Si no existe → se crea
   - Si se envía `null` explícitamente → se elimina (soft-delete)
-- Al cambiar serología, se recalcula `semaforoAptitud` del donante
 
 ## Diseño Técnico (RFC)
 
@@ -75,34 +74,41 @@ const actualizarDonacionSchema = z.object({
 ```
 
 #### Service: `actualizar(id: number, input: ActualizarDonacionInput)`
-1. Validar que la donación existe y no está soft-deleted (404 si no)
+1. Validar que la donación existe y no está soft-deleted → `AppError(404, 'Donación no encontrada')`
 2. Validar que no se intente cambiar `donanteId` (el schema no lo permite)
 3. Si incluye `resultadoSerologia`:
    - Si la donación ya tiene serología → actualizar con `update`
    - Si no tiene → crear con `create`
    - Si es `null` → soft-delete la serología existente
-4. Recalcular semáforo del donante basado en TODAS sus donaciones activas
-5. Retornar donación actualizada
+4. Retornar donación actualizada con `toDonacionResponse()`
 
-#### Recalculo de semáforo
+#### Controller
 ```typescript
-async function recalcularSemaforo(donanteId: number) {
-  const donaciones = await repository.findActivasByDonanteId(donanteId)
-  const tieneSerologiaPositiva = donaciones.some(
-    d => d.resultadoSerologia && (
-      d.resultadoSerologia.hiv ||
-      d.resultadoSerologia.hcv ||
-      d.resultadoSerologia.hbv ||
-      d.resultadoSerologia.chagas ||
-      d.resultadoSerologia.sifilis
-    )
-  )
-  await prisma.donante.update({
-    where: { id: donanteId },
-    data: { semaforoAptitud: tieneSerologiaPositiva ? 'ROJO' : 'VERDE' },
-  })
+async function actualizar(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const input = actualizarDonacionSchema.parse(req.body)
+    const result = await donacionService.actualizar(id, input)
+    res.status(200).json(successResponse({ item: result }))
+  } catch (err) {
+    next(err)
+  }
 }
 ```
+
+#### Routes
+```typescript
+router.put('/:id', authMiddleware, actualizar)
+```
+
+### Frontend
+
+#### Contrato de UI
+- Botón "Editar" en cada fila de la tabla
+- Abre el mismo Dialog de formulario (reutiliza `donacion-form.tsx`) precargado con datos existentes
+- Título del Dialog: "Editar donación"
+- Los mismos campos y validaciones que creación
+- Al guardar: PUT → cierra Dialog → refresca tabla
 
 ## Casos de Borde y Errores
 
@@ -113,19 +119,17 @@ async function recalcularSemaforo(donanteId: number) {
 | Body vacío (sin campos) | Error de validación | 400 |
 | Serología antes null → ahora valores | Se crea ResultadoSerologia | 200 |
 | Serología antes con valores → null | Se soft-deletea ResultadoSerologia | 200 |
-| Serología cambia de negativa a positiva | Semáforo → ROJO | 200 |
-| Serología cambia de positiva a todas negativas | Semáforo → VERDE (si no hay otras donaciones positivas) | 200 |
 | Sin autenticación | `{ error: "No autenticado" }` | 401 |
 
 ## Plan de Implementación
 
 ### Backend
 1. Agregar `actualizarDonacionSchema` en `donacion.schema.ts`
-2. Agregar `actualizar()` en `donacion.service.ts` con lógica de recalculo
-3. Agregar `findActivasByDonanteId()` en `donacion.repository.ts`
-4. Agregar `actualizar()` en `donacion.controller.ts`
+2. Agregar `update()` en `donacion.repository.ts`
+3. Implementar `actualizar()` en `donacion.service.ts`
+4. Agregar handler `actualizar()` en `donacion.controller.ts`
 5. Agregar `PUT /:id` en `donacion.routes.ts`
-6. Tests: actualización exitosa, recalculo de semáforo, body vacío, 404
+6. Tests: actualización exitosa, upsert serología, soft-delete serología, body vacío, 404
 
 ### Frontend
 7. Agregar `actualizar()` en `donaciones-service.ts`

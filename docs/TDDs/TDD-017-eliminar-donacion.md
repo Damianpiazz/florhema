@@ -1,6 +1,6 @@
 ---
 autor: Damián Piazza
-fecha: 2026-06-06
+fecha: 2026-06-08
 titulo: Eliminar Donación (soft-delete)
 ---
 
@@ -9,7 +9,7 @@ titulo: Eliminar Donación (soft-delete)
 ## Contexto de Negocio (PRD)
 
 ### Objetivo
-Permitir eliminar lógicamente (soft-delete) una donación del sistema. La donación no se borra físicamente, solo se marca como eliminada para conservar la trazabilidad. Al eliminar, se recalcula el semáforo del donante considerando solo las donaciones activas restantes.
+Permitir eliminar lógicamente (soft-delete) una donación del sistema. La donación no se borra físicamente, solo se marca como eliminada para conservar la trazabilidad. La eliminación **no** modifica el semáforo del donante; ese cálculo se realiza desde el módulo Donante.
 
 ### User Persona
 - **Nombre**: Administrador del sistema
@@ -19,8 +19,6 @@ Permitir eliminar lógicamente (soft-delete) una donación del sistema. La donac
 - Solo administradores pueden eliminar donaciones (`adminMiddleware`)
 - La donación se marca con `deletedAt` (soft-delete)
 - No se elimina físicamente el registro
-- Se recalcula `semaforoAptitud` del donante según las donaciones activas restantes
-- Si no quedan donaciones activas, el semáforo vuelve a VERDE
 - El `ResultadoSerologia` asociado también se soft-deletea
 
 ## Diseño Técnico (RFC)
@@ -32,21 +30,27 @@ Permitir eliminar lógicamente (soft-delete) una donación del sistema. La donac
 ```json
 {
   "success": true,
-  "message": "Donación eliminada correctamente"
+  "data": { "message": "Donación eliminada correctamente" }
 }
 ```
 
 ### Backend
 
+#### Estructura del Código
+```
+backend/src/modules/donacion/
+├── donacion.routes.ts        ← se agrega DELETE /:id con adminMiddleware
+├── donacion.controller.ts    ← se agrega handler eliminar()
+├── donacion.service.ts       ← se agrega eliminar(): soft-delete donación + serología
+└── donacion.repository.ts    ← se agrega softDelete()
+```
+
 #### Service: `eliminar(id: number)`
-1. Validar que la donación existe y no está ya soft-deleted
+1. Validar que la donación existe y no está ya soft-deleted → `AppError(404, 'Donación no encontrada')`
 2. Soft-delete en transacción:
    - `prisma.donacion.update({ where: { id }, data: { deletedAt: new Date() } })`
    - Si tiene `resultadoSerologia`: soft-delete también
-3. Recalcular semáforo del donante basado en donaciones activas restantes:
-   - Si no quedan donaciones activas → VERDE
-   - Si quedan → evaluar serología de todas las activas
-4. Retornar mensaje de éxito
+3. Retornar mensaje de éxito
 
 #### Controller
 ```typescript
@@ -66,27 +70,34 @@ async function eliminar(req: Request, res: Response, next: NextFunction) {
 router.delete('/:id', authMiddleware, adminMiddleware, eliminar)
 ```
 
+### Frontend
+
+#### Contrato de UI
+- Botón "Eliminar" (ícono Trash2) en cada fila, visible solo para administradores
+- AlertDialog de confirmación: "¿Eliminar donación?"
+- Al confirmar: DELETE → cierra AlertDialog → refresca tabla
+- Manejo de errores con ErrorAlert
+
 ## Casos de Borde y Errores
 
 | Escenario | Resultado | HTTP |
 |-----------|-----------|------|
 | Donación no existe | `{ error: "Donación no encontrada" }` | 404 |
-| Donación ya eliminada | `{ error: "La donación ya fue eliminada" }` | 400 |
+| Donación ya eliminada | `{ error: "Donación no encontrada" }` | 404 |
 | Sin autenticación | `{ error: "No autenticado" }` | 401 |
-| Usuario no admin | `{ error: "No autorizado" }` | 403 |
-| Sin donaciones activas restantes | Semáforo del donante → VERDE | 200 |
-| Con donaciones activas sin serología positiva | Semáforo conserva estado | 200 |
+| Usuario no admin | `{ error: "Acción no permitida. Se requiere rol ADMIN" }` | 403 |
 
 ## Plan de Implementación
 
 ### Backend
-1. Agregar `eliminar()` en `donacion.service.ts` con transacción y recalculo
-2. Agregar `eliminar()` en `donacion.controller.ts`
-3. Agregar `DELETE /:id` en `donacion.routes.ts` con `adminMiddleware`
-4. Tests: eliminación exitosa, 404, 403 sin admin, doble eliminación, recalculo de semáforo
+1. Agregar `softDelete()` en `donacion.repository.ts`
+2. Implementar `eliminar()` en `donacion.service.ts` con transacción
+3. Agregar handler `eliminar()` en `donacion.controller.ts`
+4. Agregar `DELETE /:id` en `donacion.routes.ts` con `adminMiddleware`
+5. Tests: eliminación exitosa, 404, 403 sin admin, doble eliminación
 
 ### Frontend
-5. Agregar `eliminar()` en `donaciones-service.ts`
-6. Reutilizar patrón de `AlertDialog` (mismo que persona-delete-dialog)
-7. Agregar botón "Eliminar" en tabla (visible solo para admin)
-8. Tests: confirmación funciona, llamada correcta, manejo de errores
+6. Agregar `eliminar()` en `donaciones-service.ts`
+7. Crear `donacion-delete-dialog.tsx` con AlertDialog (mismo patrón que persona-delete-dialog)
+8. Agregar botón "Eliminar" en tabla (visible solo para admin)
+9. Tests: confirmación funciona, llamada correcta, manejo de errores
