@@ -7,6 +7,7 @@ import {
   update,
   remove,
   detalle,
+  getByDni,
   listarDonaciones,
   listarTransfusiones,
   listarEstudios,
@@ -17,6 +18,7 @@ import {
 const router = Router()
 
 router.get('/', authMiddleware, list)
+router.get('/dni/:dni', authMiddleware, getByDni)
 router.get('/:id', authMiddleware, detalle)
 router.post('/', authMiddleware, create)
 router.put('/:id', authMiddleware, update)
