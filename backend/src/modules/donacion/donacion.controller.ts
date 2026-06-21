@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express'
 
 import {
   donacionQuerySchema,
+  crearDonacionSchema,
   listarDonacionesResponseSchema,
   donacionItemResponseSchema,
 } from '@/modules/donacion/donacion.schema'
@@ -11,6 +12,69 @@ import { successResponse } from '@/utils/api-response'
 /**
  * @openapi
  * /api/v1/donaciones:
+ *   post:
+ *     tags:
+ *       - Donaciones
+ *     summary: Crear una donación
+ *     description: Registra una nueva donación asociada a un donante existente. La serología es opcional. Requiere autenticación.
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - donanteId
+ *               - fecha
+ *               - peso
+ *               - tensionArterial
+ *               - hemoglobina
+ *               - tipoDonacion
+ *             properties:
+ *               donanteId:
+ *                 type: integer
+ *               fecha:
+ *                 type: string
+ *                 format: date-time
+ *               peso:
+ *                 type: number
+ *                 minimum: 50
+ *               tensionArterial:
+ *                 type: string
+ *                 example: "120/80"
+ *               hemoglobina:
+ *                 type: number
+ *                 minimum: 12.5
+ *               tipoDonacion:
+ *                 type: string
+ *                 enum: [VOLUNTARIA, REPOSICION]
+ *               reaccionAdversa:
+ *                 type: string
+ *                 nullable: true
+ *               resultadoSerologia:
+ *                 type: object
+ *                 properties:
+ *                   hiv:
+ *                     type: boolean
+ *                   hcv:
+ *                     type: boolean
+ *                   hbv:
+ *                     type: boolean
+ *                   chagas:
+ *                     type: boolean
+ *                   sifilis:
+ *                     type: boolean
+ *     responses:
+ *       201:
+ *         description: Donación creada exitosamente
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Donante no encontrado
  *   get:
  *     tags:
  *       - Donaciones
@@ -60,6 +124,17 @@ import { successResponse } from '@/utils/api-response'
  *       401:
  *         description: No autenticado
  */
+export async function create(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = crearDonacionSchema.parse(req.body)
+    const result = await donacionService.crear(data)
+    const validated = donacionItemResponseSchema.parse({ item: result })
+    res.status(201).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const query = donacionQuerySchema.parse(req.query)
