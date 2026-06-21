@@ -1,10 +1,16 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useDonaciones } from '@/features/donaciones/hooks/useDonaciones'
 import { DonacionesTable } from '@/features/donaciones/components/donaciones-table'
+import { donacionesService } from '@/features/donaciones/donaciones-service'
+import { useMutation } from '@tanstack/react-query'
+import type { CrearDonacionInput } from '@/features/donaciones/donaciones.schema'
 
 export default function DonacionesPage() {
+  const queryClient = useQueryClient()
+
   const {
     searchInput,
     setSearchInput,
@@ -25,6 +31,13 @@ export default function DonacionesPage() {
     isLoading,
     error,
   } = useDonaciones()
+
+  const { mutateAsync: crearDonacion, isPending: saving } = useMutation({
+    mutationFn: (input: CrearDonacionInput) => donacionesService.crear(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['donaciones'] })
+    },
+  })
 
   const donaciones = data?.items ?? []
   const total = data?.total ?? 0
@@ -69,6 +82,8 @@ export default function DonacionesPage() {
           },
           onFilterChange: handleFilterChange,
         }}
+        onCrear={async (input) => { await crearDonacion(input) }}
+        saving={saving}
       />
     </div>
   )

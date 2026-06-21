@@ -10,6 +10,7 @@ import {
   Columns3,
   Check,
   X,
+  Plus,
 } from 'lucide-react'
 import {
   flexRender,
@@ -44,7 +45,8 @@ import {
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { formatDni } from '@/utils/formatters'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
-import type { Donacion } from '@/features/donaciones/donaciones.schema'
+import { DonacionForm } from '@/features/donaciones/components/donacion-form'
+import type { Donacion, CrearDonacionInput } from '@/features/donaciones/donaciones.schema'
 
 interface DonacionesTableProps {
   search: {
@@ -74,6 +76,8 @@ interface DonacionesTableProps {
     onFechaHastaChange: (v: string) => void
     onFilterChange: () => void
   }
+  onCrear: (input: CrearDonacionInput) => Promise<void>
+  saving: boolean
 }
 
 export function DonacionesTable({
@@ -81,8 +85,11 @@ export function DonacionesTable({
   pagination,
   data,
   filters,
+  onCrear,
+  saving,
 }: DonacionesTableProps) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const serologiaIndicators = (row: Donacion) => {
     const s = row.resultadoSerologia
@@ -200,9 +207,14 @@ export function DonacionesTable({
     [pagination.total, pagination.pageSize],
   )
 
+  const handleCrear = async (input: CrearDonacionInput) => {
+    await onCrear(input)
+    setDialogOpen(false)
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -242,6 +254,10 @@ export function DonacionesTable({
         </Select>
         <Button onClick={search.onSearch} variant="secondary">
           Buscar
+        </Button>
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="size-4" />
+          Nueva donación
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -323,6 +339,13 @@ export function DonacionesTable({
         onPageChange={pagination.onPageChange}
         pageSize={pagination.pageSize}
         onPageSizeChange={pagination.onPageSizeChange}
+      />
+
+      <DonacionForm
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleCrear}
+        saving={saving}
       />
     </div>
   )

@@ -61,3 +61,47 @@ export async function findById(id: number) {
     },
   })
 }
+
+export async function findDonanteById(id: number) {
+  return prisma.donante.findFirst({
+    where: { id, deletedAt: null },
+  })
+}
+
+export async function create(data: {
+  donanteId: number
+  fecha: Date
+  peso: number
+  tensionArterial: string
+  hemoglobina: number
+  tipoDonacion: string
+  reaccionAdversa: string | null
+  resultadoSerologia?: {
+    hiv: boolean
+    hcv: boolean
+    hbv: boolean
+    chagas: boolean
+    sifilis: boolean
+  } | null
+}) {
+  return prisma.donacion.create({
+    data: {
+      donanteId: data.donanteId,
+      fecha: data.fecha,
+      peso: data.peso,
+      tensionArterial: data.tensionArterial,
+      hemoglobina: data.hemoglobina,
+      tipoDonacion: data.tipoDonacion as TipoDonacion,
+      reaccionAdversa: data.reaccionAdversa ?? null,
+      resultadoSerologia: data.resultadoSerologia
+        ? { create: data.resultadoSerologia }
+        : undefined,
+    },
+    include: {
+      donante: {
+        include: { persona: true },
+      },
+      resultadoSerologia: true,
+    },
+  })
+}
