@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import { authMiddleware } from '@/middlewares/auth.middleware'
-import { list, getById } from '@/modules/donacion/donacion.controller'
+import { create, list, getById } from '@/modules/donacion/donacion.controller'
 
 const router = Router()
 
+router.post('/', authMiddleware, create)
 router.get('/', authMiddleware, list)
 router.get('/:id', authMiddleware, getById)
 
