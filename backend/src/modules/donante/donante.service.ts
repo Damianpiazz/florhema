@@ -42,3 +42,11 @@ export async function obtener(id: number) {
   }
   return toDonanteResponse(donante as any)
 }
+
+export async function buscarPorDni(dni: string) {
+  const donante = await donanteRepository.findByDni(dni)
+  if (!donante) {
+    throw new AppError(404, 'Donante no encontrado')
+  }
+  return toDonanteResponse(donante as any)
+}

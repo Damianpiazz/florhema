@@ -104,3 +104,39 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
     next(err)
   }
 }
+
+/**
+ * @openapi
+ * /api/v1/donantes/dni/{dni}:
+ *   get:
+ *     tags:
+ *       - Donantes
+ *     summary: Obtener donante por DNI
+ *     description: Retorna los datos de un donante buscando por el DNI de su persona asociada.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: dni
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: DNI del donante
+ *     responses:
+ *       200:
+ *         description: Donante encontrado
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Donante no encontrado
+ */
+export async function getByDni(req: Request, res: Response, next: NextFunction) {
+  try {
+    const dni = req.params.dni
+    const result = await donanteService.buscarPorDni(dni)
+    const validated = donanteItemResponseSchema.parse({ item: result })
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}

@@ -58,7 +58,7 @@ export const serologiaInputSchema = z.object({
 })
 
 export const crearDonacionSchema = z.object({
-  donanteId: z.number().int().positive(),
+  dni: z.string().min(1, 'El DNI es requerido'),
   fecha: z.coerce.date(),
   peso: z.number().positive().min(50, 'El peso mínimo es 50 kg'),
   tensionArterial: z.string().regex(/^\d{2,3}\/\d{2,3}$/, 'Formato: sistólica/diastólica (ej. 120/80)'),
@@ -68,6 +68,10 @@ export const crearDonacionSchema = z.object({
   resultadoSerologia: serologiaInputSchema.nullable().optional(),
 })
 
+export const actualizarDonacionSchema = crearDonacionSchema
+export const actualizarDonacionResponseSchema = donacionItemResponseSchema
+
 export type DonacionResponse = z.infer<typeof donacionResponseSchema>
 export type DonacionQuery = z.infer<typeof donacionQuerySchema>
 export type CrearDonacionInput = z.infer<typeof crearDonacionSchema>
+export type ActualizarDonacionInput = z.infer<typeof actualizarDonacionSchema>
