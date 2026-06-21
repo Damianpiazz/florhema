@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express'
 import {
   donacionQuerySchema,
   crearDonacionSchema,
+  actualizarDonacionSchema,
   listarDonacionesResponseSchema,
   donacionItemResponseSchema,
 } from '@/modules/donacion/donacion.schema'
@@ -176,6 +177,92 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
     const id = Number(req.params.id)
     const result = await donacionService.obtener(id)
     const validated = donacionItemResponseSchema.parse({ item: result })
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/donaciones/{id}:
+ *   put:
+ *     tags:
+ *       - Donaciones
+ *     summary: Actualizar una donación
+ *     description: Actualiza los datos de una donación existente. Requiere autenticación.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la donación
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - donanteId
+ *               - fecha
+ *               - peso
+ *               - tensionArterial
+ *               - hemoglobina
+ *               - tipoDonacion
+ *             properties:
+ *               donanteId:
+ *                 type: integer
+ *               fecha:
+ *                 type: string
+ *                 format: date-time
+ *               peso:
+ *                 type: number
+ *                 minimum: 50
+ *               tensionArterial:
+ *                 type: string
+ *                 example: "120/80"
+ *               hemoglobina:
+ *                 type: number
+ *                 minimum: 12.5
+ *               tipoDonacion:
+ *                 type: string
+ *                 enum: [VOLUNTARIA, REPOSICION]
+ *               reaccionAdversa:
+ *                 type: string
+ *                 nullable: true
+ *               resultadoSerologia:
+ *                 type: object
+ *                 properties:
+ *                   hiv:
+ *                     type: boolean
+ *                   hcv:
+ *                     type: boolean
+ *                   hbv:
+ *                     type: boolean
+ *                   chagas:
+ *                     type: boolean
+ *                   sifilis:
+ *                     type: boolean
+ *     responses:
+ *       200:
+ *         description: Donación actualizada exitosamente
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Donación o donante no encontrado
+ */
+export async function update(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const data = actualizarDonacionSchema.parse(req.body)
+    const item = await donacionService.actualizar(id, data)
+    const validated = donacionItemResponseSchema.parse({ item })
     res.status(200).json(successResponse(validated))
   } catch (err) {
     next(err)

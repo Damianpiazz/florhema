@@ -1,6 +1,7 @@
 'use client'
 
-import { useReducer, useEffect, useState } from 'react'
+import { useReducer, useEffect, useState, useRef } from 'react'
+import { Loader2 } from 'lucide-react'
 import { extractErrorMessage } from '@/utils/error-utils'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import {
@@ -26,7 +27,8 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { crearDonacionInputSchema } from '@/features/donaciones/donaciones.schema'
-import type { CrearDonacionInput, SerologiaInput } from '@/features/donaciones/donaciones.schema'
+import { donacionesService } from '@/features/donaciones/donaciones-service'
+import type { CrearDonacionInput, Donacion, SerologiaInput } from '@/features/donaciones/donaciones.schema'
 import type { ZodError } from 'zod'
 
 interface DonacionFormProps {
@@ -34,10 +36,11 @@ interface DonacionFormProps {
   onOpenChange: (open: boolean) => void
   onSave: (input: CrearDonacionInput) => Promise<void>
   saving: boolean
+  editing?: Donacion | null
 }
 
 interface FormState {
-  donanteId: string
+  dni: string
   fecha: string
   peso: string
   tensionArterial: string
@@ -57,7 +60,7 @@ type FormAction =
   | { type: 'RESET' }
 
 const initialState: FormState = {
-  donanteId: '',
+  dni: '',
   fecha: '',
   peso: '',
   tensionArterial: '',
@@ -96,7 +99,7 @@ function toInput(state: FormState): CrearDonacionInput {
   const hasAnySerologia = serologia.hiv || serologia.hcv || serologia.hbv || serologia.chagas || serologia.sifilis
 
   return {
-    donanteId: Number(state.donanteId),
+    dni: state.dni,
     fecha: state.fecha,
     peso: Number(state.peso),
     tensionArterial: state.tensionArterial,
@@ -107,18 +110,81 @@ function toInput(state: FormState): CrearDonacionInput {
   }
 }
 
-export function DonacionForm({ open, onOpenChange, onSave, saving }: DonacionFormProps) {
+export function DonacionForm({ open, onOpenChange, onSave, saving, editing }: DonacionFormProps) {
   const [form, dispatch] = useReducer(formReducer, initialState)
   const [serverError, setServerError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [dniStatus, setDniStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
+  const [dniDonante, setDniDonante] = useState<{ nombre: string; apellido: string } | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     if (open) {
-      dispatch({ type: 'RESET' })
+      if (editing) {
+        dispatch({
+          type: 'SET_FIELD', field: 'dni', value: editing.donante.dni,
+        })
+        dispatch({
+          type: 'SET_FIELD', field: 'fecha', value: editing.fecha,
+        })
+        dispatch({
+          type: 'SET_FIELD', field: 'peso', value: String(editing.peso),
+        })
+        dispatch({
+          type: 'SET_FIELD', field: 'tensionArterial', value: editing.tensionArterial,
+        })
+        dispatch({
+          type: 'SET_FIELD', field: 'hemoglobina', value: String(editing.hemoglobina),
+        })
+        dispatch({
+          type: 'SET_FIELD', field: 'tipoDonacion', value: editing.tipoDonacion,
+        })
+        dispatch({
+          type: 'SET_FIELD', field: 'reaccionAdversa', value: editing.reaccionAdversa ?? '',
+        })
+        if (editing.resultadoSerologia) {
+          dispatch({ type: 'SET_CHECKBOX', field: 'hiv', value: editing.resultadoSerologia.hiv })
+          dispatch({ type: 'SET_CHECKBOX', field: 'hcv', value: editing.resultadoSerologia.hcv })
+          dispatch({ type: 'SET_CHECKBOX', field: 'hbv', value: editing.resultadoSerologia.hbv })
+          dispatch({ type: 'SET_CHECKBOX', field: 'chagas', value: editing.resultadoSerologia.chagas })
+          dispatch({ type: 'SET_CHECKBOX', field: 'sifilis', value: editing.resultadoSerologia.sifilis })
+        }
+      } else {
+        dispatch({ type: 'RESET' })
+      }
       setServerError(null)
       setFieldErrors({})
+      setDniStatus('idle')
+      setDniDonante(null)
     }
-  }, [open])
+  }, [open, editing])
+
+  useEffect(() => {
+    if (open && form.dni && form.dni.length >= 7) {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      setDniStatus('checking')
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const persona = await donacionesService.verificarDonante(form.dni)
+          setDniDonante({ nombre: persona.nombre, apellido: persona.apellido })
+          setDniStatus('valid')
+        } catch (err) {
+          setDniDonante(null)
+          const msg = err instanceof Error ? err.message : ''
+          setDniStatus(msg.includes('Persona no encontrada') ? 'invalid' : 'idle')
+          if (msg && !msg.includes('Persona no encontrada')) {
+            setServerError(msg)
+          }
+        }
+      }, 400)
+    } else {
+      setDniStatus('idle')
+      setDniDonante(null)
+    }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [open, form.dni])
 
   const setField = (field: keyof FormState, value: string) => {
     dispatch({ type: 'SET_FIELD', field, value })
@@ -140,8 +206,13 @@ export function DonacionForm({ open, onOpenChange, onSave, saving }: DonacionFor
     setServerError(null)
     setFieldErrors({})
 
-    if (!form.donanteId || !form.fecha || !form.peso || !form.tensionArterial || !form.hemoglobina || !form.tipoDonacion) {
+    if (!form.dni || !form.fecha || !form.peso || !form.tensionArterial || !form.hemoglobina || !form.tipoDonacion) {
       setServerError('Completá todos los campos obligatorios')
+      return
+    }
+
+    if (dniStatus !== 'valid') {
+      setServerError('El DNI ingresado no corresponde a un donante registrado')
       return
     }
 
@@ -179,24 +250,40 @@ export function DonacionForm({ open, onOpenChange, onSave, saving }: DonacionFor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nueva donación</DialogTitle>
-          <DialogDescription>Completá los datos de la donación.</DialogDescription>
+          <DialogTitle>{editing ? 'Editar donación' : 'Nueva donación'}</DialogTitle>
+          <DialogDescription>{editing ? 'Actualizá los datos de la donación.' : 'Completá los datos de la donación.'}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ErrorAlert message={serverError} />
 
           <Field>
-            <FieldLabel htmlFor="donanteId">Donante (ID)</FieldLabel>
-            <Input
-              id="donanteId"
-              value={form.donanteId}
-              onChange={(e) => setField('donanteId', e.target.value)}
-              inputMode="numeric"
-              required
-              placeholder="ID del donante"
-            />
-            {fieldErrors.donanteId && (
-              <p className="text-sm text-red-500">{fieldErrors.donanteId}</p>
+            <FieldLabel htmlFor="dni">DNI del donante</FieldLabel>
+            <div className="relative">
+              <Input
+                id="dni"
+                value={form.dni}
+                onChange={(e) => setField('dni', e.target.value)}
+                placeholder="Ingresá el DNI"
+                required
+              />
+              {dniStatus === 'checking' && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" />
+              )}
+              {dniStatus === 'valid' && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 text-lg leading-none">✓</span>
+              )}
+              {dniStatus === 'invalid' && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 text-lg leading-none">✗</span>
+              )}
+            </div>
+            {dniStatus === 'valid' && dniDonante && (
+              <p className="text-sm text-green-700 mt-1">{dniDonante.nombre} {dniDonante.apellido}</p>
+            )}
+            {dniStatus === 'invalid' && (
+              <p className="text-sm text-red-500 mt-1">Persona no encontrada</p>
+            )}
+            {fieldErrors.dni && (
+              <p className="text-sm text-red-500">{fieldErrors.dni}</p>
             )}
           </Field>
 
@@ -311,7 +398,7 @@ export function DonacionForm({ open, onOpenChange, onSave, saving }: DonacionFor
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || dniStatus === 'checking'}>
               {saving ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>

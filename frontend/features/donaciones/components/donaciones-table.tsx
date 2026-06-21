@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {
   Search,
   Eye,
+  Pencil,
   Loader2,
   ChevronDown,
   Columns3,
@@ -45,8 +46,7 @@ import {
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { formatDni } from '@/utils/formatters'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
-import { DonacionForm } from '@/features/donaciones/components/donacion-form'
-import type { Donacion, CrearDonacionInput } from '@/features/donaciones/donaciones.schema'
+import type { Donacion } from '@/features/donaciones/donaciones.schema'
 
 interface DonacionesTableProps {
   search: {
@@ -76,8 +76,8 @@ interface DonacionesTableProps {
     onFechaHastaChange: (v: string) => void
     onFilterChange: () => void
   }
-  onCrear: (input: CrearDonacionInput) => Promise<void>
-  saving: boolean
+  onNueva: () => void
+  onEditar: (donacion: Donacion) => void
 }
 
 export function DonacionesTable({
@@ -85,11 +85,10 @@ export function DonacionesTable({
   pagination,
   data,
   filters,
-  onCrear,
-  saving,
+  onNueva,
+  onEditar,
 }: DonacionesTableProps) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [dialogOpen, setDialogOpen] = useState(false)
 
   const serologiaIndicators = (row: Donacion) => {
     const s = row.resultadoSerologia
@@ -181,6 +180,10 @@ export function DonacionesTable({
       header: () => <div className="text-right">Acciones</div>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
+            <Pencil className="size-4" />
+            <span className="sr-only">Editar</span>
+          </Button>
           <Link href={`/personas/${row.original.donante.personaId}`}>
             <Button variant="ghost" size="icon">
               <Eye className="size-4" />
@@ -192,7 +195,7 @@ export function DonacionesTable({
       enableSorting: false,
       enableHiding: false,
     },
-  ], [])
+  ], [onEditar])
 
   const table = useReactTable({
     data: data.items,
@@ -206,11 +209,6 @@ export function DonacionesTable({
     () => Math.ceil(pagination.total / pagination.pageSize) || 1,
     [pagination.total, pagination.pageSize],
   )
-
-  const handleCrear = async (input: CrearDonacionInput) => {
-    await onCrear(input)
-    setDialogOpen(false)
-  }
 
   return (
     <div className="space-y-4">
@@ -255,7 +253,7 @@ export function DonacionesTable({
         <Button onClick={search.onSearch} variant="secondary">
           Buscar
         </Button>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={onNueva}>
           <Plus className="size-4" />
           Nueva donación
         </Button>
@@ -339,13 +337,6 @@ export function DonacionesTable({
         onPageChange={pagination.onPageChange}
         pageSize={pagination.pageSize}
         onPageSizeChange={pagination.onPageSizeChange}
-      />
-
-      <DonacionForm
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSave={handleCrear}
-        saving={saving}
       />
     </div>
   )

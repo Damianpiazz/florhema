@@ -183,6 +183,15 @@ export const listarActividadResponseSchema = z.object({
   offset: z.number(),
 })
 
+export const personaDniItemResponseSchema = z.object({
+  item: z.object({
+    id: z.number(),
+    dni: z.string(),
+    nombre: z.string(),
+    apellido: z.string(),
+  }),
+})
+
 // =========================
 // PAGINACION
 // =========================

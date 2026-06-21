@@ -63,3 +63,10 @@ export async function findById(id: number) {
     include: { persona: true },
   })
 }
+
+export async function findByDni(dni: string) {
+  return prisma.donante.findFirst({
+    where: { deletedAt: null, persona: { dni } },
+    include: { persona: true },
+  })
+}

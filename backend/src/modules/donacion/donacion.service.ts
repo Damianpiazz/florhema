@@ -1,13 +1,13 @@
 import { toDonacionResponse } from '@/modules/donacion/donacion.dto'
 import * as donacionRepository from '@/modules/donacion/donacion.repository'
 import { AppError } from '@/utils/app-error'
-import type { DonacionQuery, CrearDonacionInput } from '@/modules/donacion/donacion.schema'
+import type { DonacionQuery, CrearDonacionInput, ActualizarDonacionInput } from '@/modules/donacion/donacion.schema'
 
 const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 20
 
 export async function crear(input: CrearDonacionInput) {
-  const donante = await donacionRepository.findDonanteById(input.donanteId)
+  const donante = await donacionRepository.findDonanteByPersonaDni(input.dni)
   if (!donante) {
     throw new AppError(404, 'Donante no encontrado')
   }
@@ -23,7 +23,42 @@ export async function crear(input: CrearDonacionInput) {
     : null
 
   const donacion = await donacionRepository.create({
-    donanteId: input.donanteId,
+    donanteId: donante.id,
+    fecha: input.fecha,
+    peso: input.peso,
+    tensionArterial: input.tensionArterial,
+    hemoglobina: input.hemoglobina,
+    tipoDonacion: input.tipoDonacion,
+    reaccionAdversa: input.reaccionAdversa ?? null,
+    resultadoSerologia: serologia,
+  })
+
+  return toDonacionResponse(donacion as any)
+}
+
+export async function actualizar(id: number, input: ActualizarDonacionInput) {
+  const existente = await donacionRepository.findById(id)
+  if (!existente) {
+    throw new AppError(404, 'Donación no encontrada')
+  }
+
+  const donante = await donacionRepository.findDonanteByPersonaDni(input.dni)
+  if (!donante) {
+    throw new AppError(404, 'Donante no encontrado')
+  }
+
+  const serologia = input.resultadoSerologia
+    ? {
+        hiv: input.resultadoSerologia.hiv ?? false,
+        hcv: input.resultadoSerologia.hcv ?? false,
+        hbv: input.resultadoSerologia.hbv ?? false,
+        chagas: input.resultadoSerologia.chagas ?? false,
+        sifilis: input.resultadoSerologia.sifilis ?? false,
+      }
+    : null
+
+  const donacion = await donacionRepository.update(id, {
+    donanteId: donante.id,
     fecha: input.fecha,
     peso: input.peso,
     tensionArterial: input.tensionArterial,
