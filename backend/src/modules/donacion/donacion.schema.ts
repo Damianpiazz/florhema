@@ -49,5 +49,25 @@ export const donacionItemResponseSchema = z.object({
   item: donacionResponseSchema,
 })
 
+export const serologiaInputSchema = z.object({
+  hiv: z.boolean(),
+  hcv: z.boolean(),
+  hbv: z.boolean(),
+  chagas: z.boolean(),
+  sifilis: z.boolean(),
+})
+
+export const crearDonacionSchema = z.object({
+  donanteId: z.number().int().positive(),
+  fecha: z.coerce.date(),
+  peso: z.number().positive().min(50, 'El peso mínimo es 50 kg'),
+  tensionArterial: z.string().regex(/^\d{2,3}\/\d{2,3}$/, 'Formato: sistólica/diastólica (ej. 120/80)'),
+  hemoglobina: z.number().positive().min(12.5, 'La hemoglobina mínima es 12.5 g/dL'),
+  tipoDonacion: z.enum(['VOLUNTARIA', 'REPOSICION']),
+  reaccionAdversa: z.string().nullable().optional(),
+  resultadoSerologia: serologiaInputSchema.nullable().optional(),
+})
+
 export type DonacionResponse = z.infer<typeof donacionResponseSchema>
 export type DonacionQuery = z.infer<typeof donacionQuerySchema>
+export type CrearDonacionInput = z.infer<typeof crearDonacionSchema>
