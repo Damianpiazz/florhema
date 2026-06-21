@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios'
 import { parseListarDonacionesResponse, parseDonacionResponse } from './donaciones.dto'
-import type { Donacion } from './donaciones.schema'
+import type { Donacion, CrearDonacionInput } from './donaciones.schema'
 
 export const donacionesService = {
   async listar(params: {
@@ -17,6 +17,11 @@ export const donacionesService = {
 
   async obtener(id: number): Promise<Donacion> {
     const { data } = await api.get(`/donaciones/${id}`)
+    return parseDonacionResponse(data)
+  },
+
+  async crear(input: CrearDonacionInput): Promise<Donacion> {
+    const { data } = await api.post('/donaciones', input)
     return parseDonacionResponse(data)
   },
 }
