@@ -182,3 +182,56 @@ describe('GET /api/v1/donantes/:id', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('GET /api/v1/donantes/dni/:dni', () => {
+  it('debe responder 200 con el donante', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue(mockDonantes[0])
+
+    const res = await request(app)
+      .get('/api/v1/donantes/dni/12345678')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        item: {
+          id: 1,
+          personaId: 1,
+          persona: { id: 1, dni: '12345678', nombre: 'Juan', apellido: 'Pérez' },
+          semaforoAptitud: 'VERDE',
+          createdAt: mockDonantes[0].createdAt.toISOString(),
+        },
+      },
+    })
+  })
+
+  it('debe responder 404 cuando el donante no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .get('/api/v1/donantes/dni/99999999')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({
+      success: false,
+      error: 'Donante no encontrado',
+    })
+  })
+
+  it('debe responder 401 sin autenticación', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app).get('/api/v1/donantes/dni/12345678')
+
+    expect(res.status).toBe(401)
+  })
+})
