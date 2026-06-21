@@ -114,6 +114,13 @@ export async function findDonanteByPersonaDni(dni: string) {
   })
 }
 
+export async function softDelete(id: number) {
+  return prisma.donacion.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  })
+}
+
 export async function create(data: {
   donanteId: number
   fecha: Date
