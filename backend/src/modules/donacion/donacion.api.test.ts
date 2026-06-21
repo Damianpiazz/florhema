@@ -641,3 +641,59 @@ describe('PUT /api/v1/donaciones/:id', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('DELETE /api/v1/donaciones/:id', () => {
+  it('debe responder 200 al eliminar (soft-delete)', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donacion.findFirst).mockResolvedValue(mockDonaciones[0])
+    vi.mocked(prisma.donacion.update).mockResolvedValue({ ...mockDonaciones[0], deletedAt: new Date() })
+
+    const res = await request(app)
+      .delete('/api/v1/donaciones/1')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ success: true, data: null })
+  })
+
+  it('debe responder 404 cuando la donación no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donacion.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .delete('/api/v1/donaciones/999')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({ success: false, error: 'Donación no encontrada' })
+  })
+
+  it('debe responder 403 cuando el usuario no es ADMIN', async () => {
+    const { prisma } = await import('@/lib/prisma')
+
+    vi.mocked(prisma.session.findUnique).mockResolvedValue({
+      ...mockSession,
+      user: { ...mockSession.user, role: 'USER' as const },
+    })
+
+    const res = await request(app)
+      .delete('/api/v1/donaciones/1')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(403)
+  })
+
+  it('debe responder 401 sin autenticación', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app)
+      .delete('/api/v1/donaciones/1')
+
+    expect(res.status).toBe(401)
+  })
+})
