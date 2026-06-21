@@ -71,6 +71,19 @@ export async function actualizar(id: number, data: ActualizarPersonaInput) {
   return toPersonaResponse(persona)
 }
 
+export async function buscarPorDni(dni: string) {
+  const persona = await personaRepository.findByDni(dni)
+  if (!persona) {
+    throw new AppError(404, 'Persona no encontrada')
+  }
+  return {
+    id: persona.id,
+    dni: persona.dni,
+    nombre: persona.nombre,
+    apellido: persona.apellido,
+  }
+}
+
 export async function eliminar(id: number) {
   const existente = await personaRepository.findById(id)
   if (!existente) {
