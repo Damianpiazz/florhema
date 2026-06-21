@@ -1,15 +1,18 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useDonaciones } from '@/features/donaciones/hooks/useDonaciones'
 import { DonacionesTable } from '@/features/donaciones/components/donaciones-table'
+import { DonacionForm } from '@/features/donaciones/components/donacion-form'
 import { donacionesService } from '@/features/donaciones/donaciones-service'
-import { useMutation } from '@tanstack/react-query'
-import type { CrearDonacionInput } from '@/features/donaciones/donaciones.schema'
+import type { Donacion, CrearDonacionInput } from '@/features/donaciones/donaciones.schema'
 
 export default function DonacionesPage() {
   const queryClient = useQueryClient()
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<Donacion | null>(null)
 
   const {
     searchInput,
@@ -32,12 +35,32 @@ export default function DonacionesPage() {
     error,
   } = useDonaciones()
 
-  const { mutateAsync: crearDonacion, isPending: saving } = useMutation({
+  const { mutateAsync: crearMut, isPending: savingCrear } = useMutation({
     mutationFn: (input: CrearDonacionInput) => donacionesService.crear(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['donaciones'] })
     },
   })
+
+  const { mutateAsync: actualizarMut, isPending: savingActualizar } = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: CrearDonacionInput }) =>
+      donacionesService.actualizar(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['donaciones'] })
+    },
+  })
+
+  const saving = savingCrear || savingActualizar
+
+  const handleSave = useCallback(async (input: CrearDonacionInput) => {
+    if (editing) {
+      await actualizarMut({ id: editing.id, input })
+    } else {
+      await crearMut(input)
+    }
+    setDialogOpen(false)
+    setEditing(null)
+  }, [editing, crearMut, actualizarMut])
 
   const donaciones = data?.items ?? []
   const total = data?.total ?? 0
@@ -82,8 +105,22 @@ export default function DonacionesPage() {
           },
           onFilterChange: handleFilterChange,
         }}
-        onCrear={async (input) => { await crearDonacion(input) }}
+        onNueva={() => {
+          setEditing(null)
+          setDialogOpen(true)
+        }}
+        onEditar={(d) => {
+          setEditing(d)
+          setDialogOpen(true)
+        }}
+      />
+
+      <DonacionForm
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSave}
         saving={saving}
+        editing={editing}
       />
     </div>
   )
