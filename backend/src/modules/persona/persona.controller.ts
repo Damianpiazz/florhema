@@ -14,6 +14,7 @@ import {
   listarEstudiosGestanteResponseSchema,
   listarRecienNacidosResponseSchema,
   listarActividadResponseSchema,
+  personaDniItemResponseSchema,
 } from '@/modules/persona/persona.schema'
 import * as personaService from '@/modules/persona/persona.service'
 import { successResponse } from '@/utils/api-response'
@@ -495,6 +496,42 @@ export async function listarActividad(req: Request, res: Response, next: NextFun
     const query = paginatedQuerySchema.parse(req.query)
     const result = await personaService.listarActividad(id, query)
     const validated = listarActividadResponseSchema.parse(result)
+    res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/personas/dni/{dni}:
+ *   get:
+ *     tags:
+ *       - Personas
+ *     summary: Obtener persona por DNI
+ *     description: Retorna los datos básicos de una persona buscando por DNI exacto.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: dni
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: DNI de la persona
+ *     responses:
+ *       200:
+ *         description: Persona encontrada
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Persona no encontrada
+ */
+export async function getByDni(req: Request, res: Response, next: NextFunction) {
+  try {
+    const dni = req.params.dni
+    const result = await personaService.buscarPorDni(dni)
+    const validated = personaDniItemResponseSchema.parse({ item: result })
     res.status(200).json(successResponse(validated))
   } catch (err) {
     next(err)
