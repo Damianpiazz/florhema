@@ -24,6 +24,7 @@ const items = [
 const items = [
   { title: 'Personas', url: '/personas', icon: Users },
   { title: 'Donantes', url: '/donantes', icon: Heart },
+  { title: 'Donaciones', url: '/donaciones', icon: Heart },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
