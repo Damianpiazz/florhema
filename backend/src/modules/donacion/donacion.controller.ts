@@ -268,3 +268,40 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     next(err)
   }
 }
+
+/**
+ * @openapi
+ * /api/v1/donaciones/{id}:
+ *   delete:
+ *     tags:
+ *       - Donaciones
+ *     summary: Eliminar una donación (soft-delete)
+ *     description: Elimina lógicamente una donación. Solo usuarios ADMIN. Requiere autenticación.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la donación
+ *     responses:
+ *       200:
+ *         description: Donación eliminada exitosamente
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: No autorizado (requiere ADMIN)
+ *       404:
+ *         description: Donación no encontrada
+ */
+export async function remove(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    await donacionService.eliminar(id)
+    res.status(200).json(successResponse(null))
+  } catch (err) {
+    next(err)
+  }
+}

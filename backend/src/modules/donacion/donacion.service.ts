@@ -100,6 +100,14 @@ export async function listar(params: DonacionQuery) {
   }
 }
 
+export async function eliminar(id: number) {
+  const existente = await donacionRepository.findById(id)
+  if (!existente) {
+    throw new AppError(404, 'Donación no encontrada')
+  }
+  await donacionRepository.softDelete(id)
+}
+
 export async function obtener(id: number) {
   const donacion = await donacionRepository.findById(id)
   if (!donacion) {

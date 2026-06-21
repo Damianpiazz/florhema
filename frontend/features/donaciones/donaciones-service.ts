@@ -30,6 +30,10 @@ export const donacionesService = {
     return parseDonacionResponse(data)
   },
 
+  async eliminar(id: number): Promise<void> {
+    await api.delete(`/donaciones/${id}`)
+  },
+
   async verificarDonante(dni: string) {
     const { data } = await api.get(`/personas/dni/${dni}`)
     return data.data.item as { id: number; dni: string; nombre: string; apellido: string }
