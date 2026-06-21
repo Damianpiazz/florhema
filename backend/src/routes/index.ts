@@ -6,6 +6,7 @@ import grupoSanguineoRoutes from '../modules/grupo-sanguineo/grupo-sanguineo.rou
 
 import personaRoutes from '../modules/persona/persona.routes'
 import donanteRoutes from '../modules/donante/donante.routes'
+import donacionRoutes from '../modules/donacion/donacion.routes'
 
 const apiRouter = Router()
 
@@ -17,5 +18,6 @@ apiRouter.use('/personas', personaRoutes)
 
 apiRouter.use('/donantes', donanteRoutes)
 
+apiRouter.use('/donaciones', donacionRoutes)
 
 export default apiRouter
