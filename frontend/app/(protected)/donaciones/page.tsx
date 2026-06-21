@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useDonaciones } from '@/features/donaciones/hooks/useDonaciones'
 import { DonacionesTable } from '@/features/donaciones/components/donaciones-table'
 import { DonacionForm } from '@/features/donaciones/components/donacion-form'
+import { DonacionDeleteDialog } from '@/features/donaciones/components/donacion-delete-dialog'
 import { donacionesService } from '@/features/donaciones/donaciones-service'
 import type { Donacion, CrearDonacionInput } from '@/features/donaciones/donaciones.schema'
 
@@ -13,6 +14,7 @@ export default function DonacionesPage() {
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Donacion | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const {
     searchInput,
@@ -50,6 +52,13 @@ export default function DonacionesPage() {
     },
   })
 
+  const { mutateAsync: eliminarMut, isPending: deleting } = useMutation({
+    mutationFn: (id: number) => donacionesService.eliminar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['donaciones'] })
+    },
+  })
+
   const saving = savingCrear || savingActualizar
 
   const handleSave = useCallback(async (input: CrearDonacionInput) => {
@@ -61,6 +70,16 @@ export default function DonacionesPage() {
     setDialogOpen(false)
     setEditing(null)
   }, [editing, crearMut, actualizarMut])
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteId) return
+    await eliminarMut(deleteId)
+    setDeleteId(null)
+  }, [deleteId, eliminarMut])
+
+  const handleCloseDelete = useCallback(() => {
+    setDeleteId(null)
+  }, [])
 
   const donaciones = data?.items ?? []
   const total = data?.total ?? 0
@@ -113,6 +132,7 @@ export default function DonacionesPage() {
           setEditing(d)
           setDialogOpen(true)
         }}
+        onEliminar={(id) => setDeleteId(id)}
       />
 
       <DonacionForm
@@ -121,6 +141,14 @@ export default function DonacionesPage() {
         onSave={handleSave}
         saving={saving}
         editing={editing}
+      />
+
+      <DonacionDeleteDialog
+        deleteId={deleteId}
+        onClose={handleCloseDelete}
+        onConfirm={handleDelete}
+        error={null}
+        deleting={deleting}
       />
     </div>
   )
