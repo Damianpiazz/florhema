@@ -6,6 +6,7 @@ import {
   Search,
   Eye,
   Pencil,
+  Trash2,
   Loader2,
   ChevronDown,
   Columns3,
@@ -13,6 +14,7 @@ import {
   X,
   Plus,
 } from 'lucide-react'
+import { useAuth } from '@/features/auth/auth-context'
 import {
   flexRender,
   getCoreRowModel,
@@ -78,6 +80,7 @@ interface DonacionesTableProps {
   }
   onNueva: () => void
   onEditar: (donacion: Donacion) => void
+  onEliminar: (id: number) => void
 }
 
 export function DonacionesTable({
@@ -87,7 +90,9 @@ export function DonacionesTable({
   filters,
   onNueva,
   onEditar,
+  onEliminar,
 }: DonacionesTableProps) {
+  const { user } = useAuth()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const serologiaIndicators = (row: Donacion) => {
@@ -190,12 +195,18 @@ export function DonacionesTable({
               <span className="sr-only">Ver detalle</span>
             </Button>
           </Link>
+          {user?.role === 'ADMIN' && (
+            <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
+              <Trash2 className="size-4 text-destructive" />
+              <span className="sr-only">Eliminar</span>
+            </Button>
+          )}
         </div>
       ),
       enableSorting: false,
       enableHiding: false,
     },
-  ], [onEditar])
+  ], [onEditar, onEliminar, user?.role])
 
   const table = useReactTable({
     data: data.items,
