@@ -1,0 +1,18 @@
+node_modules/
+.turbo/
+.husky/_
+
+# env
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# AI / tools
+.atl/
