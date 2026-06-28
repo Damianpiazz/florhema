@@ -47,7 +47,7 @@ const sections = [
     items: [
       { title: 'Usuarios', url: '/usuarios', icon: UserCog },
       { title: 'Auditoría', url: '/auditoria', icon: ScrollText },
-      { title: 'Papelera', url: '/admin/papelera', icon: Trash2 },
+      { title: 'Papelera', url: '/papelera', icon: Trash2 },
     ],
   },
   {

@@ -1,8 +1,12 @@
 import { api } from '@/lib/axios'
 
-export interface ConsultaGestanteItem {
+export interface ConsultaEstudioItem {
   id: number
-  personaId: number
+  gestanteId: number
+  fecha: string
+  compatibilidadConyugal: string | null
+  estadoEstudio: string
+  coombsIndirecto: boolean
   persona: {
     id: number
     dni: string
@@ -10,19 +14,25 @@ export interface ConsultaGestanteItem {
     apellido: string
     grupoSanguineo: { tipo: string; factorRh: string } | null
   }
-  ultimoEstudio: {
-    id: number
-    fecha: string
-    estadoEstudio: string
-    coombsIndirecto: boolean
-  } | null
-  totalEstudios: number
+}
+
+export interface ConsultaResponse {
+  items: ConsultaEstudioItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export const consultaService = {
-  async buscarGestantes(search?: string): Promise<ConsultaGestanteItem[]> {
-    const params = search ? { search } : {}
-    const response = await api.get<ConsultaGestanteItem[]>('/gestantes/consulta', { params })
+  async buscarEstudios(
+    search?: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<ConsultaResponse> {
+    const params: Record<string, string | number> = { page, pageSize }
+    if (search) params.search = search
+    const response = await api.get<ConsultaResponse>('/gestantes/consulta', { params })
     return response.data
   },
 }

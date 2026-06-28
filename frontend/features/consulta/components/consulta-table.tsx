@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Search, Clock, CheckCircle2, Droplet, Loader2, AlertCircle } from 'lucide-react'
+import { Search, Clock, CheckCircle2, Droplet, Loader2, AlertCircle, X, Check } from 'lucide-react'
 import {
   flexRender,
   getCoreRowModel,
@@ -22,7 +22,8 @@ import { Card } from '@/components/ui/card'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ConsultaGestanteItem } from '@/features/consulta/consulta-service'
+import { PaginationBar } from '@/components/data-table/pagination-bar'
+import type { ConsultaEstudioItem } from '@/features/consulta/consulta-service'
 
 interface ConsultaTableProps {
   search: {
@@ -31,13 +32,36 @@ interface ConsultaTableProps {
     onSearch: () => void
   }
   data: {
-    items: ConsultaGestanteItem[]
+    items: ConsultaEstudioItem[]
     loading: boolean
     error: string | null
   }
+  pagination: {
+    page: number
+    totalPages: number
+    total: number
+    pageSize: number
+    onPageChange: (p: number) => void
+    onPageSizeChange: (s: number) => void
+  }
 }
 
-function GrupoBadge({ grupo }: { grupo: { tipo: string; factorRh: string } | null }) {
+const estadoVariants: Record<string, string> = {
+  FINALIZADO:
+    'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200',
+  EN_PROCESO:
+    'bg-amber-50 text-amber-600 border-amber-200',
+  PENDIENTE:
+    'bg-gray-100 text-gray-600 border-gray-200',
+}
+
+const estadoLabels: Record<string, string> = {
+  FINALIZADO: 'Finalizado',
+  EN_PROCESO: 'En proceso',
+  PENDIENTE: 'Pendiente',
+}
+
+function GrupoSanguineoCell({ grupo }: { grupo: { tipo: string; factorRh: string } | null }) {
   if (!grupo) {
     return (
       <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
@@ -48,36 +72,15 @@ function GrupoBadge({ grupo }: { grupo: { tipo: string; factorRh: string } | nul
   }
   const factor = grupo.factorRh === 'POSITIVO' ? '+' : '-'
   return (
-    <Badge
-      variant="outline"
-      className="text-emerald-600 border-emerald-300 bg-emerald-50 text-sm px-3 py-1"
-    >
+    <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50">
       <Droplet className="size-3 mr-1" />
-      {grupo.tipo}
-      {factor}
+      {grupo.tipo}{factor}
     </Badge>
   )
 }
 
-function EstadoBadge({ estado }: { estado: string }) {
-  if (estado === 'FINALIZADO') {
-    return (
-      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200">
-        <CheckCircle2 className="size-3 mr-1" />
-        Finalizado
-      </Badge>
-    )
-  }
-  return (
-    <Badge variant="secondary" className="text-amber-600 bg-amber-50 border-amber-200">
-      <Clock className="size-3 mr-1" />
-      {estado === 'EN_PROCESO' ? 'En proceso' : 'Pendiente'}
-    </Badge>
-  )
-}
-
-export function ConsultaTable({ search, data }: ConsultaTableProps) {
-  const columns: ColumnDef<ConsultaGestanteItem>[] = useMemo(
+export function ConsultaTable({ search, data, pagination }: ConsultaTableProps) {
+  const columns: ColumnDef<ConsultaEstudioItem>[] = useMemo(
     () => [
       {
         accessorKey: 'persona.apellido',
@@ -96,38 +99,55 @@ export function ConsultaTable({ search, data }: ConsultaTableProps) {
       },
       {
         id: 'grupoSanguineo',
-        header: 'Grupo Sanguíneo',
-        cell: ({ row }) => <GrupoBadge grupo={row.original.persona.grupoSanguineo} />,
+        header: 'Grupo',
+        cell: ({ row }) => <GrupoSanguineoCell grupo={row.original.persona.grupoSanguineo} />,
       },
       {
-        id: 'ultimoEstudio',
-        header: 'Último Estudio',
+        accessorKey: 'fecha',
+        header: 'Fecha',
+        cell: ({ getValue }) => {
+          const v = getValue<string>()
+          return new Date(v).toLocaleDateString('es-AR')
+        },
+      },
+      {
+        id: 'estadoEstudio',
+        header: 'Estado',
+        cell: ({ row }) => (
+          <Badge variant="outline" className={estadoVariants[row.original.estadoEstudio] ?? ''}>
+            {row.original.estadoEstudio === 'FINALIZADO' && <CheckCircle2 className="size-3 mr-1" />}
+            {row.original.estadoEstudio === 'EN_PROCESO' && <Clock className="size-3 mr-1" />}
+            {estadoLabels[row.original.estadoEstudio] ?? row.original.estadoEstudio}
+          </Badge>
+        ),
+      },
+      {
+        id: 'compatibilidadConyugal',
+        header: 'Compatibilidad',
+        cell: ({ getValue }) => {
+          const v = getValue<string | null>()
+          return v ? <span>{v}</span> : <span className="text-muted-foreground">—</span>
+        },
+        accessorFn: (row) => row.compatibilidadConyugal,
+      },
+      {
+        id: 'coombsIndirecto',
+        header: 'Coombs Indirecto',
         cell: ({ row }) => {
-          const gestante = row.original
-          if (!gestante.ultimoEstudio) {
-            return (
-              <Badge variant="outline" className="text-muted-foreground">
-                Sin estudios
-              </Badge>
-            )
-          }
+          const positivo = row.original.coombsIndirecto
           return (
-            <div className="flex items-center gap-2">
-              <EstadoBadge estado={gestante.ultimoEstudio.estadoEstudio} />
-              <span className="text-xs text-muted-foreground">
-                {new Date(gestante.ultimoEstudio.fecha).toLocaleDateString('es-AR')}
+            <div className="flex items-center gap-1">
+              {positivo ? (
+                <X className="size-4 text-red-600" />
+              ) : (
+                <Check className="size-4 text-green-600" />
+              )}
+              <span className={positivo ? 'text-red-600 font-medium' : 'text-green-600'}>
+                {positivo ? 'Positivo' : 'Negativo'}
               </span>
             </div>
           )
         },
-      },
-      {
-        id: 'totalEstudios',
-        header: 'Total Estudios',
-        accessorFn: (row) => row.totalEstudios,
-        cell: ({ getValue }) => (
-          <span className="font-medium">{getValue<number>()}</span>
-        ),
       },
     ],
     [],
@@ -152,7 +172,7 @@ export function ConsultaTable({ search, data }: ConsultaTableProps) {
             className="pl-8"
           />
         </div>
-        <Button onClick={search.onSearch} disabled={data.loading || !search.value.trim()}>
+        <Button onClick={search.onSearch} disabled={data.loading}>
           {data.loading && <Loader2 className="size-4 animate-spin mr-2" />}
           Buscar
         </Button>
@@ -175,14 +195,11 @@ export function ConsultaTable({ search, data }: ConsultaTableProps) {
         <Card>
           <div className="p-6 text-center text-muted-foreground">
             <AlertCircle className="size-8 mx-auto mb-2 opacity-50" />
-            No se encontraron gestantes.
+            No se encontraron estudios.
           </div>
         </Card>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
-            {data.items.length} resultado{data.items.length !== 1 ? 's' : ''}
-          </p>
           <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-muted">
@@ -217,6 +234,15 @@ export function ConsultaTable({ search, data }: ConsultaTableProps) {
               </TableBody>
             </Table>
           </div>
+
+          <PaginationBar
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.onPageChange}
+            onPageSizeChange={pagination.onPageSizeChange}
+          />
         </>
       )}
     </div>

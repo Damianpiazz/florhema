@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import { consultarGestantes } from '@/modules/gestante/gestante-consulta.service'
+import { consultarEstudios } from '@/modules/gestante/gestante-consulta.service'
 
 /**
  * @openapi
@@ -7,8 +7,8 @@ import { consultarGestantes } from '@/modules/gestante/gestante-consulta.service
  *   get:
  *     tags:
  *       - Gestantes
- *     summary: Buscar gestantes
- *     description: Busca gestantes por DNI, nombre o apellido. Retorna hasta 20 resultados con su último estudio y grupo sanguíneo. Requiere autenticación.
+ *     summary: Buscar estudios de gestantes
+ *     description: Retorna estudios de gestantes con paginación. Filtra por DNI, nombre o apellido de la paciente. Requiere autenticación.
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -16,17 +16,28 @@ import { consultarGestantes } from '@/modules/gestante/gestante-consulta.service
  *         name: search
  *         schema:
  *           type: string
- *         description: Término de búsqueda (coincide con DNI, nombre o apellido)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
  *     responses:
  *       200:
- *         description: Lista de gestantes encontradas
+ *         description: Lista paginada de estudios
  *       401:
  *         description: No autenticado
  */
 export async function consultaGestante(req: Request, res: Response, next: NextFunction) {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search : undefined
-    const data = await consultarGestantes(search)
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize as string) || 20))
+    const data = await consultarEstudios(search, page, pageSize)
     res.json(data)
   } catch (err) {
     next(err)
