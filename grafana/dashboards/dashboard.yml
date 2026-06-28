@@ -1,0 +1,15 @@
+# Provisioning config for Grafana dashboard provider
+apiVersion: 1
+
+providers:
+  - name: "Florhema"
+    orgId: 1
+    folder: "Florhema"
+    folderUid: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true

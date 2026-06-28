@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # No AlertManager configured yet — rules are evaluated but not dispatched
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "otel-collector"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["otel-collector:9464"]
+        labels:
+          service: "florhema-api"
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

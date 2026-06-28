@@ -142,6 +142,49 @@ export async function getByDni(req: Request, res: Response, next: NextFunction) 
   }
 }
 
+/**
+ * @openapi
+ * /api/v1/donantes/{id}/calcular-semaforo:
+ *   post:
+ *     tags:
+ *       - Donantes
+ *     summary: Calcular semáforo de aptitud
+ *     description: Calcula y actualiza el semáforo de aptitud de un donante basado en sus donaciones y estudios. Requiere autenticación.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del donante
+ *     responses:
+ *       200:
+ *         description: Semáforo calculado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     item:
+ *                       type: object
+ *                       properties:
+ *                         semaforoAptitud:
+ *                           type: string
+ *                           enum: [VERDE, AMARILLO, ROJO]
+ *                         motivo:
+ *                           type: string
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Donante no encontrado
+ */
 export async function calcular(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id)

@@ -1,0 +1,73 @@
+name: florhema-test
+
+networks:
+  florhema-network:
+    driver: bridge
+
+services:
+  florhema-backend:
+    build:
+      context: ./backend
+      target: test
+    container_name: florhema-backend-test
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: "postgresql://florhema_user:florhema_pass@florhema-postgres:5432/florhema_db_test"
+      OTEL_COLLECTOR_HOST: otel-collector
+      NODE_ENV: test
+      LOG_LEVEL: silent
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - /app/node_modules
+    depends_on:
+      florhema-postgres:
+        condition: service_healthy
+    networks:
+      - florhema-network
+
+  florhema-postgres:
+    image: postgres:16
+    container_name: florhema-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: florhema_db_test
+      POSTGRES_USER: florhema_user
+      POSTGRES_PASSWORD: florhema_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - florhema_postgres_data_test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U florhema_user -d florhema_db_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    networks:
+      - florhema-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: florhema-otel-collector-test
+    ports:
+      - "4319:4318"
+      - "9465:9464"
+    volumes:
+      - ./otel-collector/config.yml:/etc/otel-collector/config.yml:ro
+    command: ["--config=/etc/otel-collector/config.yml"]
+    profiles:
+      - with-otel
+    networks:
+      - florhema-network
+
+volumes:
+  florhema_postgres_data_test:
