@@ -1,30 +1,35 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import { consultaService, type ConsultaGestanteItem } from '@/features/consulta/consulta-service'
 import { ConsultaTable } from '@/features/consulta/components/consulta-table'
 
 export default function ConsultaGestantePage() {
   const [search, setSearch] = useState('')
-  const [results, setResults] = useState<ConsultaGestanteItem[] | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<ConsultaGestanteItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searched, setSearched] = useState(false)
 
-  const handleSearch = async () => {
-    if (!search.trim()) return
+  const fetchData = async (searchTerm?: string) => {
     setLoading(true)
     setError(null)
-    setSearched(true)
     try {
-      const data = await consultaService.buscarGestantes(search.trim())
+      const data = await consultaService.buscarGestantes(searchTerm)
       setResults(data)
     } catch (err: any) {
       setError(err?.response?.data?.error?.message ?? err?.message ?? 'Error al buscar')
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleSearch = async () => {
+    fetchData(search.trim() || undefined)
   }
 
   return (
@@ -44,10 +49,9 @@ export default function ConsultaGestantePage() {
           onSearch: handleSearch,
         }}
         data={{
-          items: results ?? [],
+          items: results,
           loading,
           error,
-          searched,
         }}
       />
     </div>

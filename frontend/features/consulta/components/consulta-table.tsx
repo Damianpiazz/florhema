@@ -34,7 +34,6 @@ interface ConsultaTableProps {
     items: ConsultaGestanteItem[]
     loading: boolean
     error: string | null
-    searched: boolean
   }
 }
 
@@ -172,14 +171,14 @@ export function ConsultaTable({ search, data }: ConsultaTableProps) {
             </Card>
           ))}
         </div>
-      ) : data.searched && data.items.length === 0 ? (
+      ) : data.items.length === 0 ? (
         <Card>
           <div className="p-6 text-center text-muted-foreground">
             <AlertCircle className="size-8 mx-auto mb-2 opacity-50" />
-            No se encontraron gestantes con ese criterio de búsqueda.
+            No se encontraron gestantes.
           </div>
         </Card>
-      ) : data.items.length > 0 ? (
+      ) : (
         <>
           <p className="text-sm text-muted-foreground">
             {data.items.length} resultado{data.items.length !== 1 ? 's' : ''}
@@ -219,7 +218,7 @@ export function ConsultaTable({ search, data }: ConsultaTableProps) {
             </Table>
           </div>
         </>
-      ) : null}
+      )}
     </div>
   )
 }
