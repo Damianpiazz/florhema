@@ -14,7 +14,7 @@ import {
   X,
   Plus,
 } from 'lucide-react'
-import { useAuth } from '@/features/auth/auth-context'
+import { usePermissions } from '@/features/auth/use-permissions'
 import {
   flexRender,
   getCoreRowModel,
@@ -93,7 +93,7 @@ export function TransfusionesTable({
   onEditar,
   onEliminar,
 }: TransfusionesTableProps) {
-  const { user } = useAuth()
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const compatibilidadCell = (row: Transfusion) => {
@@ -198,17 +198,19 @@ export function TransfusionesTable({
       header: () => <div className="text-right">Acciones</div>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
-            <Pencil className="size-4" />
-            <span className="sr-only">Editar</span>
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
+              <Pencil className="size-4" />
+              <span className="sr-only">Editar</span>
+            </Button>
+          )}
           <Link href={`/personas/${row.original.paciente.personaId}`}>
             <Button variant="ghost" size="icon">
               <Eye className="size-4" />
               <span className="sr-only">Ver detalle</span>
             </Button>
           </Link>
-          {user?.role === 'ADMIN' && (
+          {canDelete && (
             <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
               <Trash2 className="size-4 text-destructive" />
               <span className="sr-only">Eliminar</span>
@@ -219,7 +221,7 @@ export function TransfusionesTable({
       enableSorting: false,
       enableHiding: false,
     },
-  ], [onEditar, onEliminar, user?.role])
+  ], [onEditar, onEliminar, canEdit, canDelete])
 
   const table = useReactTable({
     data: data.items,
@@ -279,10 +281,12 @@ export function TransfusionesTable({
         <Button onClick={search.onSearch} variant="secondary">
           Buscar
         </Button>
-        <Button onClick={onNueva}>
-          <Plus className="size-4" />
-          Nueva transfusión
-        </Button>
+        {canCreate && (
+          <Button onClick={onNueva}>
+            <Plus className="size-4" />
+            Nueva transfusión
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">

@@ -37,6 +37,7 @@ import {
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { formatDni } from '@/utils/formatters'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
+import { usePermissions } from '@/features/auth/use-permissions'
 import type { Paciente } from '@/features/pacientes/pacientes.schema'
 
 interface PacientesTableProps {
@@ -58,7 +59,6 @@ interface PacientesTableProps {
     loading: boolean
     error: string | null
   }
-  userRole?: string
   onNueva: () => void
   onEliminar: (id: number) => void
 }
@@ -67,10 +67,10 @@ export function PacientesTable({
   search,
   pagination,
   data,
-  userRole,
   onNueva,
   onEliminar,
 }: PacientesTableProps) {
+  const { canCreate, canDelete } = usePermissions()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const columns: ColumnDef<Paciente>[] = useMemo(() => [
@@ -108,7 +108,7 @@ export function PacientesTable({
               <span className="sr-only">Ver detalle</span>
             </Button>
           </Link>
-          {userRole === 'ADMIN' && (
+           {canDelete && (
             <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
               <Trash2 className="size-4 text-destructive" />
               <span className="sr-only">Eliminar</span>
@@ -119,7 +119,7 @@ export function PacientesTable({
       enableSorting: false,
       enableHiding: false,
     },
-  ], [userRole, onEliminar])
+  ], [canDelete, onEliminar])
 
   const table = useReactTable({
     data: data.items,
@@ -145,10 +145,12 @@ export function PacientesTable({
         <Button onClick={search.onSearch} variant="secondary">
           Buscar
         </Button>
-        <Button onClick={onNueva}>
-          <Plus className="size-4" />
-          Nuevo paciente
-        </Button>
+        {canCreate && (
+          <Button onClick={onNueva}>
+            <Plus className="size-4" />
+            Nuevo paciente
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">

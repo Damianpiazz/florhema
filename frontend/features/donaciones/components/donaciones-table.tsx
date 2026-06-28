@@ -15,7 +15,7 @@ import {
   Plus,
   FileText,
 } from 'lucide-react'
-import { useAuth } from '@/features/auth/auth-context'
+import { usePermissions } from '@/features/auth/use-permissions'
 import {
   flexRender,
   getCoreRowModel,
@@ -95,7 +95,7 @@ export function DonacionesTable({
   onEditar,
   onEliminar,
 }: DonacionesTableProps) {
-  const { user } = useAuth()
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const serologiaIndicators = (row: Donacion) => {
@@ -189,10 +189,12 @@ export function DonacionesTable({
       header: () => <div className="text-right">Acciones</div>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
-            <Pencil className="size-4" />
-            <span className="sr-only">Editar</span>
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
+              <Pencil className="size-4" />
+              <span className="sr-only">Editar</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -207,7 +209,7 @@ export function DonacionesTable({
               <span className="sr-only">Ver detalle</span>
             </Button>
           </Link>
-          {user?.role === 'ADMIN' && (
+          {canDelete && (
             <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
               <Trash2 className="size-4 text-destructive" />
               <span className="sr-only">Eliminar</span>
@@ -218,7 +220,7 @@ export function DonacionesTable({
       enableSorting: false,
       enableHiding: false,
     },
-  ], [onEditar, onEliminar, user?.role])
+  ], [onEditar, onEliminar, canEdit, canDelete])
 
   const table = useReactTable({
     data: data.items,
@@ -276,10 +278,12 @@ export function DonacionesTable({
         <Button onClick={search.onSearch} variant="secondary">
           Buscar
         </Button>
-        <Button onClick={onNueva}>
-          <Plus className="size-4" />
-          Nueva donación
-        </Button>
+        {canCreate && (
+          <Button onClick={onNueva}>
+            <Plus className="size-4" />
+            Nueva donación
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">

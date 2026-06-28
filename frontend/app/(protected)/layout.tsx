@@ -24,15 +24,22 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, user } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (loading) return
+
+    if (!isAuthenticated) {
       router.push('/login')
+      return
     }
-  }, [loading, isAuthenticated, router])
+
+    if (user?.role === 'INVITADO' && pathname !== '/consulta-gestante') {
+      router.push('/consulta-gestante')
+    }
+  }, [loading, isAuthenticated, user, pathname, router])
 
   if (loading) {
     return (

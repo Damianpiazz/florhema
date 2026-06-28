@@ -13,7 +13,7 @@ import {
   X,
   FileText,
 } from 'lucide-react'
-import { useAuth } from '@/features/auth/auth-context'
+import { usePermissions } from '@/features/auth/use-permissions'
 import {
   flexRender,
   getCoreRowModel,
@@ -96,7 +96,7 @@ export function EstudiosGestantesTable({
   onEditar,
   onEliminar,
 }: EstudiosGestantesTableProps) {
-  const { user } = useAuth()
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const columns: ColumnDef<EstudioGestante>[] = useMemo(() => [
@@ -156,10 +156,12 @@ export function EstudiosGestantesTable({
       header: () => <div className="text-right">Acciones</div>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
-            <Pencil className="size-4" />
-            <span className="sr-only">Editar</span>
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
+              <Pencil className="size-4" />
+              <span className="sr-only">Editar</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -168,7 +170,7 @@ export function EstudiosGestantesTable({
             <FileText className="size-4" />
             <span className="sr-only">Descargar constancia</span>
           </Button>
-          {user?.role === 'ADMIN' && (
+          {canDelete && (
             <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
               <Trash2 className="size-4 text-destructive" />
               <span className="sr-only">Eliminar</span>
@@ -179,7 +181,7 @@ export function EstudiosGestantesTable({
       enableSorting: false,
       enableHiding: false,
     },
-  ], [onEditar, onEliminar, user?.role])
+  ], [onEditar, onEliminar, canEdit, canDelete])
 
   const table = useReactTable({
     data: data.items,
@@ -255,10 +257,12 @@ export function EstudiosGestantesTable({
             <SelectItem value="FINALIZADO">Finalizado</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={onNuevo}>
-          <Plus className="size-4" />
-          Nuevo estudio
-        </Button>
+        {canCreate && (
+          <Button onClick={onNuevo}>
+            <Plus className="size-4" />
+            Nuevo estudio
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">

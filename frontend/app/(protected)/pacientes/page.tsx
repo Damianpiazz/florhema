@@ -9,10 +9,7 @@ import { PacientesTable } from '@/features/pacientes/components/pacientes-table'
 import { PacienteForm } from '@/features/pacientes/components/paciente-form'
 import { PacienteDeleteDialog } from '@/features/pacientes/components/paciente-delete-dialog'
 import { pacientesService } from '@/features/pacientes/pacientes-service'
-import { useAuth } from '@/features/auth/auth-context'
-
 export default function PacientesPage() {
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -84,7 +81,6 @@ export default function PacientesPage() {
           loading: isLoading,
           error: error?.message ?? null,
         }}
-        userRole={user?.role}
         onNueva={() => setDialogOpen(true)}
         onEliminar={(id) => setDeleteId(id)}
       />

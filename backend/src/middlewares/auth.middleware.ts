@@ -49,3 +49,15 @@ export async function adminMiddleware(req: Request, res: Response, next: NextFun
 
   next()
 }
+
+export function roleMiddleware(...roles: Array<'ADMIN' | 'USER' | 'INVITADO'>) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json(
+        errorResponse(`Acción no permitida. Roles requeridos: ${roles.join(', ')}`)
+      )
+    }
+
+    next()
+  }
+}

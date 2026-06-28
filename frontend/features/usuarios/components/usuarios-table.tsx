@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
+import { usePermissions } from '@/features/auth/use-permissions'
 import type { Usuario } from '@/features/usuarios/usuarios.schema'
 
 const roleVariants: Record<string, string> = {
@@ -84,6 +85,7 @@ export function UsuariosTable({
   onEditar,
   onEliminar,
 }: UsuariosTableProps) {
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const columns: ColumnDef<Usuario>[] = useMemo(
@@ -124,31 +126,35 @@ export function UsuariosTable({
         header: () => <span className="sr-only">Acciones</span>,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEditar(row.original)}
-              title="Editar"
-            >
-              <Pencil className="size-4" />
-              <span className="sr-only">Editar</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEliminar(row.original)}
-              title="Eliminar"
-            >
-              <Trash2 className="size-4 text-red-500" />
-              <span className="sr-only">Eliminar</span>
-            </Button>
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEditar(row.original)}
+                title="Editar"
+              >
+                <Pencil className="size-4" />
+                <span className="sr-only">Editar</span>
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEliminar(row.original)}
+                title="Eliminar"
+              >
+                <Trash2 className="size-4 text-red-500" />
+                <span className="sr-only">Eliminar</span>
+              </Button>
+            )}
           </div>
         ),
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [onEditar, onEliminar],
+    [onEditar, onEliminar, canEdit, canDelete],
   )
 
   const table = useReactTable({
@@ -201,10 +207,12 @@ export function UsuariosTable({
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button onClick={onCrear} className="ml-auto">
-          <Plus className="size-4" />
-          Nuevo Usuario
-        </Button>
+        {canCreate && (
+          <Button onClick={onCrear} className="ml-auto">
+            <Plus className="size-4" />
+            Nuevo Usuario
+          </Button>
+        )}
       </div>
 
       {/* Error */}

@@ -39,6 +39,7 @@ import { ErrorAlert } from '@/components/ui/error-alert'
 import { formatGrupoSanguineo } from '@/utils/grupo-utils'
 import { formatDni } from '@/utils/formatters'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
+import { usePermissions } from '@/features/auth/use-permissions'
 import type { Persona } from '@/features/personas/personas.schema'
 
 interface PersonasTableProps {
@@ -73,6 +74,7 @@ export function PersonasTable({
   onEditar,
   onEliminar,
 }: PersonasTableProps) {
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const columns: ColumnDef<Persona>[] = useMemo(() => [
@@ -102,20 +104,24 @@ export function PersonasTable({
       header: () => <div className="text-right">Acciones</div>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
-            <Pencil className="size-4" />
-            <span className="sr-only">Editar</span>
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => onEditar(row.original)}>
+              <Pencil className="size-4" />
+              <span className="sr-only">Editar</span>
+            </Button>
+          )}
           <Link href={`/personas/${row.original.id}`}>
             <Button variant="ghost" size="icon">
               <Eye className="size-4" />
               <span className="sr-only">Ver detalle</span>
             </Button>
           </Link>
-          <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
-            <Trash2 className="size-4 text-destructive" />
-            <span className="sr-only">Eliminar</span>
-          </Button>
+          {canDelete && (
+            <Button variant="ghost" size="icon" onClick={() => onEliminar(row.original.id)}>
+              <Trash2 className="size-4 text-destructive" />
+              <span className="sr-only">Eliminar</span>
+            </Button>
+          )}
         </div>
       ),
       enableSorting: false,
@@ -147,10 +153,12 @@ export function PersonasTable({
         <Button onClick={search.onSearch} variant="secondary">
           Buscar
         </Button>
-        <Button onClick={onNueva}>
-          <Plus className="size-4" />
-          Nueva persona
-        </Button>
+        {canCreate && (
+          <Button onClick={onNueva}>
+            <Plus className="size-4" />
+            Nueva persona
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
