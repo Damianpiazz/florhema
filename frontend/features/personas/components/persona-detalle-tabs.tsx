@@ -35,7 +35,7 @@ function TabContainer({ personaId, useQuery, columns, pageSize: ps, searchPlaceh
       columns={columns}
       data={items}
       loading={isLoading}
-      error={error?.message ?? null}
+      error={(error as Error | null)?.message ?? null}
       page={page}
       totalPages={totalPages}
       total={total}
@@ -48,10 +48,12 @@ function TabContainer({ personaId, useQuery, columns, pageSize: ps, searchPlaceh
   )
 }
 
-export function PersonaDetalleTabs({ personaId, detalle }: {
+interface PersonaDetalleTabsProps {
   personaId: number
   detalle: PersonaDetalle
-}) {
+}
+
+export function PersonaDetalleTabs({ personaId, detalle }: PersonaDetalleTabsProps) {
   const isMobile = useIsMobile()
   const esGestante = !!detalle.gestante
   const esDonante = !!detalle.donante
@@ -87,7 +89,7 @@ export function PersonaDetalleTabs({ personaId, detalle }: {
       )}
       {esGestante && (
         <TabsContent value="recien-nacidos">
-          <TabContainer personaId={personaId} useQuery={useRecienNacidosQuery} columns={recienNacidoColumns} emptyMessage="No tiene recién nacidos registrados." />
+          <TabContainer personaId={personaId} useQuery={useRecienNacidosQuery} columns={recienNacidoColumns} searchPlaceholder="Filtrar recién nacidos..." emptyMessage="No tiene recién nacidos registrados." />
         </TabsContent>
       )}
     </Tabs>

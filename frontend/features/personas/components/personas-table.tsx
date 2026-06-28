@@ -76,6 +76,7 @@ export function PersonasTable({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const columns: ColumnDef<Persona>[] = useMemo(() => [
+    { accessorKey: 'id', header: 'ID' },
     {
       accessorKey: 'dni',
       header: 'DNI',

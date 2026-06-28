@@ -20,10 +20,13 @@ export const grupoSanguineoItemResponseSchema = z.object({
   item: grupoSanguineoResponseSchema
 })
 
-export const actualizarGrupoSchema = z.object({
+export const crearGrupoSchema = z.object({
   tipo: z.nativeEnum(TipoABO),
   factorRh: z.nativeEnum(FactorRh)
 })
 
+export const actualizarGrupoSchema = crearGrupoSchema
+
 export type GrupoSanguineoResponse = z.infer<typeof grupoSanguineoResponseSchema>
+export type CrearGrupoInput = z.infer<typeof crearGrupoSchema>
 export type ActualizarGrupoInput = z.infer<typeof actualizarGrupoSchema>

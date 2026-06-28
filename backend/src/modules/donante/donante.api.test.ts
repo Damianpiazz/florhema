@@ -18,7 +18,7 @@ const mockDonantes = [
       apellido: 'Pérez',
     },
   },
-]
+] as any
 
 const mockSession = {
   id: 1,
@@ -33,7 +33,7 @@ const mockSession = {
     name: 'Admin',
     role: 'ADMIN' as const,
   },
-}
+} as any
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -42,6 +42,7 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       count: vi.fn(),
       findFirst: vi.fn(),
+      update: vi.fn(),
     },
   },
 }))
@@ -233,5 +234,262 @@ describe('GET /api/v1/donantes/dni/:dni', () => {
     const res = await request(app).get('/api/v1/donantes/dni/12345678')
 
     expect(res.status).toBe(401)
+  })
+})
+
+describe('POST /api/v1/donantes/:id/calcular-semaforo', () => {
+  const baseDonante = {
+    id: 1,
+    personaId: 1,
+    semaforoAptitud: 'VERDE',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    persona: { id: 1, dni: '12345678', nombre: 'Juan', apellido: 'Pérez' },
+    donaciones: [] as any[],
+  } as any
+
+  function makeDonacion(overrides: Partial<{
+    peso: number
+    hemoglobina: number
+    tensionArterial: string
+    resultadoSerologia: { hiv: boolean; hcv: boolean; hbv: boolean; chagas: boolean; sifilis: boolean } | null
+  }>) {
+    return {
+      id: 1,
+      donanteId: 1,
+      fecha: new Date('2026-06-01'),
+      peso: 75,
+      hemoglobina: 14.5,
+      tensionArterial: '120/80',
+      tipoDonacion: 'VOLUNTARIA',
+      reaccionAdversa: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      resultadoSerologia: null,
+      ...overrides,
+    }
+  }
+
+  it('debe responder 401 sin autenticación', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(null)
+
+    const res = await request(app).post('/api/v1/donantes/1/calcular-semaforo')
+
+    expect(res.status).toBe(401)
+  })
+
+  it('debe responder 404 cuando el donante no existe', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue(null)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/999/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({ success: false, error: 'Donante no encontrado' })
+  })
+
+  it('debe responder AMARILLO cuando no hay donaciones', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ ...baseDonante, donaciones: [] })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item).toEqual({
+      semaforoAptitud: 'AMARILLO',
+      motivo: 'Sin donaciones registradas',
+    })
+  })
+
+  it('debe responder ROJO cuando HIV es positivo', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({ resultadoSerologia: { hiv: true, hcv: false, hbv: false, chagas: false, sifilis: false } })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item.semaforoAptitud).toBe('ROJO')
+  })
+
+  it('debe responder ROJO cuando Chagas es positivo', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({ resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: true, sifilis: false } })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item.semaforoAptitud).toBe('ROJO')
+  })
+
+  it('debe responder AMARILLO cuando peso < 50 kg', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({
+        peso: 49,
+        resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+      })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item).toEqual({
+      semaforoAptitud: 'AMARILLO',
+      motivo: 'Peso inferior a 50 kg',
+    })
+  })
+
+  it('debe responder AMARILLO cuando hemoglobina < 12.5', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({
+        hemoglobina: 12.0,
+        resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+      })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item.semaforoAptitud).toBe('AMARILLO')
+  })
+
+  it('debe responder AMARILLO cuando hemoglobina > 17.5', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({
+        hemoglobina: 18.0,
+        resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+      })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item.semaforoAptitud).toBe('AMARILLO')
+  })
+
+  it('debe responder AMARILLO cuando TA sistólica < 100', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({
+        tensionArterial: '90/60',
+        resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+      })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item.semaforoAptitud).toBe('AMARILLO')
+  })
+
+  it('debe responder AMARILLO cuando TA sistólica > 170', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({
+        tensionArterial: '180/100',
+        resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+      })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item.semaforoAptitud).toBe('AMARILLO')
+  })
+
+  it('debe responder AMARILLO cuando no tiene serología cargada', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({ resultadoSerologia: null })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item).toEqual({
+      semaforoAptitud: 'AMARILLO',
+      motivo: 'Serología pendiente: se requiere segunda muestra',
+    })
+  })
+
+  it('debe responder VERDE cuando todos los checks son OK', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({
+      ...baseDonante,
+      donaciones: [makeDonacion({
+        peso: 75,
+        hemoglobina: 14.5,
+        tensionArterial: '120/80',
+        resultadoSerologia: { hiv: false, hcv: false, hbv: false, chagas: false, sifilis: false },
+      })],
+    })
+    vi.mocked(prisma.donante.update).mockResolvedValue({} as any)
+
+    const res = await request(app)
+      .post('/api/v1/donantes/1/calcular-semaforo')
+      .set('Cookie', 'session_token=valid_token')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.item).toEqual({
+      semaforoAptitud: 'VERDE',
+      motivo: 'Todos los requisitos cumplidos',
+    })
   })
 })

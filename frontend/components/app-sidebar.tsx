@@ -1,30 +1,62 @@
 'use client'
 
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarFooter, useSidebar } from '@/components/ui/sidebar'
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarFooter, useSidebar } from '@/components/ui/sidebar'
 import { usePathname } from 'next/navigation'
-import { ChevronsUpDown, LogOut, Users, Heart, Stethoscope, Baby, Droplets, Shield } from 'lucide-react'
+import { ChevronsUpDown, LogOut, Users, Heart, Stethoscope, Baby, Droplets, Shield, Venus, Droplet, BarChart3, ScrollText, UserCog, LayoutDashboard, Search } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/features/auth/auth-context'
 
-/* 
-const items = [
-  { title: 'Personas', url: '/personas', icon: Users },
-  { title: 'Donantes', url: '/donantes', icon: Heart },
-  { title: 'Donaciones', url: '/donaciones', icon: Heart },
-  { title: 'Pacientes', url: '/pacientes', icon: Stethoscope },
-  { title: 'Transfusiones', url: '/transfusiones', icon: Stethoscope },
-  { title: 'Gestantes', url: '/gestantes', icon: Baby },
-  { title: 'Estudios', url: '/estudios-gestantes', icon: Baby },
-  { title: 'Recién Nacidos', url: '/recien-nacidos', icon: Baby },
-  { title: 'Grupos Sanguíneos', url: '/grupos-sanguineos', icon: Droplets },
-  { title: 'Usuarios', url: '/usuarios', icon: Shield },
-]
-*/
-const items = [
-  { title: 'Personas', url: '/personas', icon: Users },
-  { title: 'Donantes', url: '/donantes', icon: Heart },
-  { title: 'Donaciones', url: '/donaciones', icon: Heart },
+const sections = [
+  {
+    title: 'Resumen',
+    icon: LayoutDashboard,
+    roles: ['ADMIN', 'USER'],
+    items: [
+      { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+      { title: 'Reportes', url: '/reportes', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Hemoterapia',
+    icon: Droplets,
+    roles: ['ADMIN', 'USER'],
+    items: [
+      { title: 'Personas', url: '/personas', icon: Users },
+      { title: 'Pacientes', url: '/pacientes', icon: Heart },
+      { title: 'Donantes', url: '/donantes', icon: Heart },
+      { title: 'Donaciones', url: '/donaciones', icon: Heart },
+      { title: 'Transfusiones', url: '/transfusiones', icon: Stethoscope },
+      { title: 'Grupos Sanguíneos', url: '/grupos-sanguineos', icon: Droplet },
+    ],
+  },
+  {
+    title: 'Obstetricia',
+    icon: Baby,
+    roles: ['ADMIN', 'USER'],
+    items: [
+      { title: 'Gestantes', url: '/gestantes', icon: Venus },
+      { title: 'Recién Nacidos', url: '/recien-nacidos', icon: Baby },
+      { title: 'Estudios Gestante', url: '/estudios-gestantes', icon: Baby },
+    ],
+  },
+  {
+    title: 'Administración',
+    icon: Shield,
+    roles: ['ADMIN'],
+    items: [
+      { title: 'Usuarios', url: '/usuarios', icon: UserCog },
+      { title: 'Auditoría', url: '/auditoria', icon: ScrollText },
+    ],
+  },
+  {
+    title: 'Consulta',
+    icon: Search,
+    roles: ['INVITADO'],
+    items: [
+      { title: 'Consulta Gestante', url: '/consulta-gestante', icon: Search },
+    ],
+  },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -51,26 +83,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <a href={item.url}>
-                        <Icon className="size-4" />
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        {sections
+          .filter((section) => section.roles.includes(user?.role ?? ''))
+          .map((section) => {
+            const SectionIcon = section.icon
+            return (
+              <SidebarGroup key={section.title}>
+                <SidebarGroupLabel>
+                  <SectionIcon className="size-3 mr-2" />
+                  {section.title}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {section.items.map((item) => {
+                      const ItemIcon = item.icon
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={pathname === item.url}>
+                            <a href={item.url}>
+                              <ItemIcon className="size-4" />
+                              <span>{item.title}</span>
+                            </a>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )
+          })}
+        </SidebarContent>
 
       <SidebarFooter>
         <SidebarMenu>

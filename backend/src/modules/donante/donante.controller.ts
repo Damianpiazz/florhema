@@ -4,6 +4,7 @@ import {
   donanteQuerySchema,
   listarDonantesResponseSchema,
   donanteItemResponseSchema,
+  calcularSemaforoResponseSchema,
 } from '@/modules/donante/donante.schema'
 import * as donanteService from '@/modules/donante/donante.service'
 import { successResponse } from '@/utils/api-response'
@@ -132,10 +133,21 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
  */
 export async function getByDni(req: Request, res: Response, next: NextFunction) {
   try {
-    const dni = req.params.dni
+    const dni = req.params.dni as string
     const result = await donanteService.buscarPorDni(dni)
     const validated = donanteItemResponseSchema.parse({ item: result })
     res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function calcular(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id)
+    const result = await donanteService.calcularSemaforo(id)
+    const validated = calcularSemaforoResponseSchema.parse(result)
+    res.status(200).json(successResponse({ item: validated }))
   } catch (err) {
     next(err)
   }

@@ -8,6 +8,12 @@ const semaforoDot: Record<string, string> = {
   ROJO: 'bg-red-500',
 }
 
+const semaforoLabel: Record<string, string> = {
+  VERDE: 'Apto',
+  AMARILLO: 'Dudas a rever',
+  ROJO: 'Excluido',
+}
+
 interface BadgesProps {
   donante: { semaforoAptitud: string } | null
   paciente: unknown
@@ -21,6 +27,8 @@ export function PersonaRoleBadges({ donante, paciente, gestante }: BadgesProps) 
         <Badge variant="outline" className="flex items-center gap-1.5">
           <span className={`inline-block size-2 rounded-full ${semaforoDot[donante.semaforoAptitud] ?? ''}`} />
           Donante
+          <span className="text-muted-foreground">·</span>
+          <span className="text-xs font-normal">{semaforoLabel[donante.semaforoAptitud] ?? donante.semaforoAptitud}</span>
         </Badge>
       )}
       {paciente && <Badge variant="outline">Paciente</Badge>}

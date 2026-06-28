@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+npx turbo run lint-staged --concurrency 1

@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Droplet, IdCard, MapPin, Phone, User, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +11,10 @@ import { formatDni, formatPhone } from '@/utils/formatters'
 import { formatDate, calcEdad } from '@/utils/date-utils'
 import { PersonaRoleBadges } from '@/features/personas/components/persona-role-badges'
 import { PersonaDetalleTabs } from '@/features/personas/components/persona-detalle-tabs'
+
 import { usePersonaDetalleQuery } from '@/features/personas/hooks/usePersonaDetalleQueries'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { donantesService } from '@/features/donantes/donantes-service'
 
 export default function PersonaDetallePage({
   params,
@@ -20,8 +23,28 @@ export default function PersonaDetallePage({
 }) {
   const { personaId } = use(params)
   const id = Number(personaId)
+  const queryClient = useQueryClient()
 
   const { data: detalle, isLoading, error } = usePersonaDetalleQuery(id)
+
+  const refetchPersona = () => {
+    queryClient.invalidateQueries({ queryKey: ['persona', id] })
+  }
+
+  const calculatedRef = useRef(false)
+  const { mutate: calcularSemaforo } = useMutation({
+    mutationFn: (donanteId: number) => donantesService.calcularSemaforo(donanteId),
+    onSuccess: () => {
+      calculatedRef.current = true
+      refetchPersona()
+    },
+  })
+
+  useEffect(() => {
+    if (detalle?.donante && !calculatedRef.current) {
+      calcularSemaforo(detalle.donante.id)
+    }
+  }, [detalle?.donante, calcularSemaforo])
 
   if (isLoading) {
     return (
@@ -92,17 +115,6 @@ export default function PersonaDetallePage({
           />
         </CardContent>
       </Card>
-
-      {detalle.gestante?.antecedentesObstetricos && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Antecedentes obstétricos</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {detalle.gestante.antecedentesObstetricos}
-          </CardContent>
-        </Card>
-      )}
 
       <PersonaDetalleTabs personaId={id} detalle={detalle} />
     </div>

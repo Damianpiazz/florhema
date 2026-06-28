@@ -73,6 +73,7 @@ export function DonantesTable({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const columns: ColumnDef<Donante>[] = useMemo(() => [
+    { accessorKey: 'id', header: 'ID' },
     {
       accessorKey: 'persona.dni',
       id: 'dni',

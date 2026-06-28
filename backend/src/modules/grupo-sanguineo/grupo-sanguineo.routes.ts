@@ -1,11 +1,13 @@
 import { Router } from 'express'
 
 import { authMiddleware, adminMiddleware } from '@/middlewares/auth.middleware'
-import { list, update, remove } from '@/modules/grupo-sanguineo/grupo-sanguineo.controller'
+import { list, create, update, remove } from '@/modules/grupo-sanguineo/grupo-sanguineo.controller'
 
 const router = Router()
 
 router.get('/', list)
+
+router.post('/', authMiddleware, adminMiddleware, create)
 
 router.put('/:id', authMiddleware, adminMiddleware, update)
 

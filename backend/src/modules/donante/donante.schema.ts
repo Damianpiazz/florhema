@@ -35,5 +35,11 @@ export const donanteItemResponseSchema = z.object({
   item: donanteResponseSchema,
 })
 
+export const calcularSemaforoResponseSchema = z.object({
+  semaforoAptitud: z.enum(['VERDE', 'AMARILLO', 'ROJO']),
+  motivo: z.string(),
+})
+
+export type CalcularSemaforoResponse = z.infer<typeof calcularSemaforoResponseSchema>
 export type DonanteResponse = z.infer<typeof donanteResponseSchema>
 export type DonanteQuery = z.infer<typeof donanteQuerySchema>

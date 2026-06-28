@@ -1,10 +1,14 @@
 # Florhema
 
-Florhema es una plataforma para la gestión del Servicio de Hemoterapia del Hospital de Las Flores. Permite administrar donantes, pacientes, gestantes y transfusiones con trazabilidad completa, generación automática de constancias y reportes estadísticos.
+Florhema es una plataforma para la gestión del Servicio de Hemoterapia del Hospital de Las Flores. Permite administrar donantes, pacientes, gestantes y transfusiones con trazabilidad completa y generación automática de constancias.
 
-Está compuesta por dos aplicaciones independientes: un backend en **Express** con **Prisma** (PostgreSQL) y un frontend en **Next.js** con **Tailwind CSS** y **shadcn/ui**.
+> **MVP**: Esta es una versión mínima viable. El sistema está en desarrollo activo y puede tener funcionalidades incompletas o en progreso.
 
-Para conocer en detalle las decisiones de arquitectura del proyecto, puedes consultar la [Documentación de Arquitectura](./docs/ARCHITECTURE.md).
+Está compuesta por dos aplicaciones independientes unificadas en un **monorepo Turborepo**:
+- **Backend**: Express + Prisma (PostgreSQL)
+- **Frontend**: Next.js + Tailwind CSS + shadcn/ui
+
+Para conocer las decisiones de arquitectura del proyecto, consulta la [Documentación de Arquitectura](./docs/ARCHITECTURE.md) y los [ADRs](./docs/ADRs/).
 
 ---
 
@@ -50,37 +54,45 @@ docker compose up -d
 
 Esto levanta un contenedor con PostgreSQL en el puerto `5432`.
 
-### 4. Backend (Express + Prisma)
+### 4. Instalar dependencias (raíz del monorepo)
+
+```bash
+npm install
+```
+
+### 5. Inicializar la base de datos
 
 ```bash
 cd backend
-npm install
 npx prisma migrate dev
-npm run dev
+cd ..
 ```
 
-El servidor de desarrollo se inicia en `http://localhost:4000`.
-
-### 5. Frontend (Next.js)
-
-Abre una nueva terminal y ejecuta:
+### 6. Iniciar ambos proyectos en desarrollo
 
 ```bash
-cd frontend
-npm install
 npm run dev
 ```
 
-El servidor de desarrollo se inicia en `http://localhost:3000`.
+Esto ejecuta backend (`localhost:4000`) y frontend (`localhost:3000`) simultáneamente vía Turborepo.
 
 ### Verificar que funciona
 
 - **Backend**: `GET http://localhost:4000/api/health`
 - **Frontend**: Abrir `http://localhost:3000` en el navegador
 
-## Comandos Útiles de Base de Datos
+## Comandos Útiles
 
-Para visualizar la base de datos gráficamente a través del navegador, puedes usar Prisma Studio:
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Inicia backend y frontend en desarrollo |
+| `npm run build` | Construye ambos proyectos (con caché) |
+| `npm run test` | Ejecuta tests de ambos proyectos |
+| `npm run lint` | Ejecuta linters de ambos proyectos |
+| `npm run format` | Formatea código con Prettier |
+| `turbo build --force` | Construye forzando sin caché |
+
+Para visualizar la base de datos gráficamente:
 
 ```bash
 cd backend
@@ -95,7 +107,7 @@ El proyecto cuenta con una suite de tests (unitarios, de integración y de API).
 
 ## Contribuir
 
-Si deseas colaborar con el proyecto, por favor lee primero nuestra **[Guía de Contribución](./docs/CONTRIBUTING.md)** para entender el flujo de trabajo con feature branches y los estándares de código.
+Si deseas colaborar, por favor lee primero nuestra **[Guía de Contribución](./docs/CONTRIBUTING.md)** para entender el flujo de trabajo con feature branches y los estándares de código.
 
 ---
 
@@ -105,8 +117,8 @@ En la carpeta `/docs` encontrarás información detallada sobre:
 
 - **[Arquitectura](./docs/ARCHITECTURE.md)**: Decisiones técnicas y estructura del proyecto.
 - **[Testing](./docs/TESTING.md)**: Estrategia e infraestructura de pruebas.
-- **[Contribución](./docs/CONTRIBUTING.md)**: Cómo empezar a desarrollar en el proyecto.
+- **[Contribución](./docs/CONTRIBUTING.md)**: Cómo empezar a desarrollar.
 - **[Migraciones](./docs/MIGRATIONS.md)**: Gestión de migraciones con Prisma.
+- **[ADRs](./docs/ADRs/)**: Registro de decisiones técnicas adoptadas.
 - **[Especificación](./docs/especificacion/requerimientos.md)**: Requerimientos funcionales, modelo de dominio y casos de uso.
 - **TDDs**: Diseños técnicos y pruebas de cada funcionalidad implementada.
-- **ADRs**: Registro de decisiones técnicas adoptadas.

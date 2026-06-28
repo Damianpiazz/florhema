@@ -529,7 +529,7 @@ export async function listarActividad(req: Request, res: Response, next: NextFun
  */
 export async function getByDni(req: Request, res: Response, next: NextFunction) {
   try {
-    const dni = req.params.dni
+    const dni = req.params.dni as string
     const result = await personaService.buscarPorDni(dni)
     const validated = personaDniItemResponseSchema.parse({ item: result })
     res.status(200).json(successResponse(validated))

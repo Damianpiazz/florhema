@@ -14,12 +14,14 @@ interface DatePickerProps {
   value?: string
   onChange?: (date: string) => void
   id?: string
+  placeholder?: string
 }
 
 export function DatePicker({
   value,
   onChange,
   id,
+  placeholder,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const date = value ? new Date(value + "T00:00:00") : undefined
@@ -32,7 +34,7 @@ export function DatePicker({
           id={id}
           className="w-full justify-start font-normal"
         >
-          {date ? date.toLocaleDateString() : "Seleccionar fecha"}
+          {date ? date.toLocaleDateString() : (placeholder ?? "Seleccionar fecha")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto overflow-hidden p-0" align="start">

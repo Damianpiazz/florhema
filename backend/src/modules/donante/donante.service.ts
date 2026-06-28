@@ -50,3 +50,49 @@ export async function buscarPorDni(dni: string) {
   }
   return toDonanteResponse(donante as any)
 }
+
+export async function calcularSemaforo(donanteId: number) {
+  const donante = await donanteRepository.findByIdWithDonaciones(donanteId)
+  if (!donante) {
+    throw new AppError(404, 'Donante no encontrado')
+  }
+
+  const ultimaDonacion = donante.donaciones[0]
+
+  if (!ultimaDonacion) {
+    await donanteRepository.update(donanteId, { semaforoAptitud: 'AMARILLO' })
+    return { semaforoAptitud: 'AMARILLO' as const, motivo: 'Sin donaciones registradas' }
+  }
+
+  if (ultimaDonacion.resultadoSerologia) {
+    const s = ultimaDonacion.resultadoSerologia
+    if (s.hiv || s.hcv || s.hbv || s.chagas || s.sifilis) {
+      await donanteRepository.update(donanteId, { semaforoAptitud: 'ROJO' })
+      return { semaforoAptitud: 'ROJO' as const, motivo: 'Serología positiva: excluido permanente' }
+    }
+  }
+
+  if (ultimaDonacion.peso < 50) {
+    await donanteRepository.update(donanteId, { semaforoAptitud: 'AMARILLO' })
+    return { semaforoAptitud: 'AMARILLO' as const, motivo: 'Peso inferior a 50 kg' }
+  }
+
+  if (ultimaDonacion.hemoglobina < 12.5 || ultimaDonacion.hemoglobina > 17.5) {
+    await donanteRepository.update(donanteId, { semaforoAptitud: 'AMARILLO' })
+    return { semaforoAptitud: 'AMARILLO' as const, motivo: 'Hemoglobina fuera del rango (12.5-17.5 g/dL)' }
+  }
+
+  const [sistolica] = ultimaDonacion.tensionArterial.split('/').map(Number)
+  if (isNaN(sistolica) || sistolica < 100 || sistolica > 170) {
+    await donanteRepository.update(donanteId, { semaforoAptitud: 'AMARILLO' })
+    return { semaforoAptitud: 'AMARILLO' as const, motivo: 'Tensión arterial fuera del rango (100-170 sistólica)' }
+  }
+
+  if (!ultimaDonacion.resultadoSerologia) {
+    await donanteRepository.update(donanteId, { semaforoAptitud: 'AMARILLO' })
+    return { semaforoAptitud: 'AMARILLO' as const, motivo: 'Serología pendiente: se requiere segunda muestra' }
+  }
+
+  await donanteRepository.update(donanteId, { semaforoAptitud: 'VERDE' })
+  return { semaforoAptitud: 'VERDE' as const, motivo: 'Todos los requisitos cumplidos' }
+}

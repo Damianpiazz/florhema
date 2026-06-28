@@ -37,7 +37,7 @@ const mockDonaciones = [
       sifilis: false,
     },
   },
-]
+] as any
 
 const mockSession = {
   id: 1,
@@ -52,7 +52,7 @@ const mockSession = {
     name: 'Admin',
     role: 'ADMIN' as const,
   },
-}
+} as any
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -206,7 +206,7 @@ describe('POST /api/v1/donaciones', () => {
     const { prisma } = await import('@/lib/prisma')
 
     vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
-    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null })
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null } as any)
     vi.mocked(prisma.donacion.create).mockResolvedValue(mockDonaciones[0])
 
     const res = await request(app)
@@ -249,7 +249,7 @@ describe('POST /api/v1/donaciones', () => {
     const mockSinSerologia = { ...mockDonaciones[0], resultadoSerologia: null }
 
     vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
-    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null })
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null } as any)
     vi.mocked(prisma.donacion.create).mockResolvedValue(mockSinSerologia)
 
     const res = await request(app)
@@ -457,7 +457,7 @@ describe('PUT /api/v1/donaciones/:id', () => {
 
     vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
     vi.mocked(prisma.donacion.findFirst).mockResolvedValueOnce(mockDonaciones[0])
-    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null })
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null } as any)
     vi.mocked(prisma.donacion.update).mockResolvedValue(mockSinSerologia)
 
     const res = await request(app)
@@ -481,7 +481,7 @@ describe('PUT /api/v1/donaciones/:id', () => {
 
     vi.mocked(prisma.session.findUnique).mockResolvedValue(mockSession)
     vi.mocked(prisma.donacion.findFirst).mockResolvedValueOnce(mockDonaciones[0])
-    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null })
+    vi.mocked(prisma.donante.findFirst).mockResolvedValue({ id: 1, deletedAt: null } as any)
     vi.mocked(prisma.donacion.update).mockResolvedValue(mockDonaciones[0])
 
     const res = await request(app)
@@ -678,7 +678,7 @@ describe('DELETE /api/v1/donaciones/:id', () => {
     vi.mocked(prisma.session.findUnique).mockResolvedValue({
       ...mockSession,
       user: { ...mockSession.user, role: 'USER' as const },
-    })
+    } as any)
 
     const res = await request(app)
       .delete('/api/v1/donaciones/1')

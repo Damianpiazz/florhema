@@ -32,5 +32,17 @@ export const listarDonantesResponseSchema = z.object({
   }),
 })
 
+export const calcularSemaforoResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.object({
+    item: z.object({
+      semaforoAptitud: z.enum(['VERDE', 'AMARILLO', 'ROJO']),
+      motivo: z.string(),
+    }),
+  }),
+})
+
+export type CalcularSemaforoResponse = z.infer<typeof calcularSemaforoResponseSchema>
+
 export type Donante = z.infer<typeof donanteSchema>
 export type ListarDonantesResponse = z.infer<typeof listarDonantesResponseSchema>

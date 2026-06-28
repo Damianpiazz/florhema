@@ -38,9 +38,9 @@ export function createAuditExtension(prisma: PrismaClient) {
                 userId,
                 action,
                 entity: model,
-                entityId: result.id,
+                entityId: (result as any).id,
                 oldValues: oldRecord ?? undefined,
-                newValues: operation !== 'delete' ? (args.data ?? args.create ?? args.update) : undefined,
+                newValues: operation !== 'delete' ? ((args as any).data ?? (args as any).create ?? (args as any).update) : undefined,
               },
             })
           } catch {

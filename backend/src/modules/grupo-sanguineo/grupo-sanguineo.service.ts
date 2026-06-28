@@ -3,12 +3,24 @@ import {
   toGrupoSanguineoItemResponse
 } from '@/modules/grupo-sanguineo/grupo-sanguineo.dto'
 import * as grupoSanguineoRepository from '@/modules/grupo-sanguineo/grupo-sanguineo.repository'
-import type { ActualizarGrupoInput } from '@/modules/grupo-sanguineo/grupo-sanguineo.schema'
+import type { CrearGrupoInput, ActualizarGrupoInput } from '@/modules/grupo-sanguineo/grupo-sanguineo.schema'
 import { AppError } from '@/utils/app-error'
 
 export async function listar() {
   const grupos = await grupoSanguineoRepository.findAllActive()
   return grupos.map(toGrupoSanguineoResponse)
+}
+
+export async function crear(data: CrearGrupoInput) {
+  const duplicado = await grupoSanguineoRepository.findByTipoFactorRh(data.tipo, data.factorRh)
+
+  if (duplicado) {
+    throw new AppError(409, 'Ya existe un grupo con esa combinación de tipo y factor Rh')
+  }
+
+  const created = await grupoSanguineoRepository.create(data)
+
+  return toGrupoSanguineoItemResponse(created)
 }
 
 export async function eliminar(id: number) {

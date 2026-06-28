@@ -2,6 +2,7 @@ import { toDonacionResponse } from '@/modules/donacion/donacion.dto'
 import * as donacionRepository from '@/modules/donacion/donacion.repository'
 import { AppError } from '@/utils/app-error'
 import type { DonacionQuery, CrearDonacionInput, ActualizarDonacionInput } from '@/modules/donacion/donacion.schema'
+import { calcularSemaforo } from '@/modules/donante/donante.service'
 
 const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 20
@@ -32,6 +33,8 @@ export async function crear(input: CrearDonacionInput) {
     reaccionAdversa: input.reaccionAdversa ?? null,
     resultadoSerologia: serologia,
   })
+
+  await calcularSemaforo(donante.id).catch(() => {})
 
   return toDonacionResponse(donacion as any)
 }
@@ -67,6 +70,8 @@ export async function actualizar(id: number, input: ActualizarDonacionInput) {
     reaccionAdversa: input.reaccionAdversa ?? null,
     resultadoSerologia: serologia,
   })
+
+  await calcularSemaforo(donante.id).catch(() => {})
 
   return toDonacionResponse(donacion as any)
 }

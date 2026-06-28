@@ -14,6 +14,8 @@ import {
   listarRecienNacidos,
   listarActividad,
 } from '@/modules/persona/persona.controller'
+import { create as crearGestante } from '@/modules/gestante/gestante.controller'
+import { create as crearPaciente } from '@/modules/paciente/paciente.controller'
 
 const router = Router()
 
@@ -26,6 +28,8 @@ router.delete('/:id', authMiddleware, adminMiddleware, remove)
 router.get('/:id/donaciones', authMiddleware, listarDonaciones)
 router.get('/:id/transfusiones', authMiddleware, listarTransfusiones)
 router.get('/:id/estudios-gestante', authMiddleware, listarEstudios)
+router.post('/:id/gestante', authMiddleware, crearGestante)
+router.post('/:id/paciente', authMiddleware, crearPaciente)
 router.get('/:id/recien-nacidos', authMiddleware, listarRecienNacidos)
 router.get('/:id/actividad', authMiddleware, listarActividad)
 

@@ -38,4 +38,18 @@ export const donacionesService = {
     const { data } = await api.get(`/personas/dni/${dni}`)
     return data.data.item as { id: number; dni: string; nombre: string; apellido: string }
   },
+
+  async descargarConstanciaDonacion(donacionId: number): Promise<void> {
+    const response = await api.get(`/constancias/donacion/${donacionId}`, {
+      responseType: 'blob',
+    })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `constancia-donacion-${donacionId}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  },
 }

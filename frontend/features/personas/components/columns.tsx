@@ -1,5 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { formatDate } from '@/utils/date-utils'
+import { Button } from '@/components/ui/button'
+import { Pencil, Trash2 } from 'lucide-react'
 import type {
   Donacion,
   Transfusion,
@@ -9,6 +11,7 @@ import type {
 } from '@/features/personas/persona-detalle.schema'
 
 export const donacionColumns: ColumnDef<Donacion>[] = [
+  { accessorKey: 'id', header: 'ID' },
   { accessorKey: 'fecha', header: 'Fecha', cell: ({ getValue }) => formatDate(getValue<string>()) },
   { accessorKey: 'tipoDonacion', header: 'Tipo' },
   { accessorKey: 'peso', header: 'Peso', cell: ({ getValue }) => `${getValue<number>()} kg` },
@@ -34,6 +37,7 @@ export const donacionColumns: ColumnDef<Donacion>[] = [
 ]
 
 export const transfusionColumns: ColumnDef<Transfusion>[] = [
+  { accessorKey: 'id', header: 'ID' },
   { accessorKey: 'fecha', header: 'Fecha', cell: ({ getValue }) => formatDate(getValue<string>()) },
   {
     accessorKey: 'componente',
@@ -65,6 +69,7 @@ export const transfusionColumns: ColumnDef<Transfusion>[] = [
 ]
 
 export const estudioColumns: ColumnDef<EstudioGestante>[] = [
+  { accessorKey: 'id', header: 'ID' },
   { accessorKey: 'fecha', header: 'Fecha', cell: ({ getValue }) => formatDate(getValue<string>()) },
   { accessorKey: 'estadoEstudio', header: 'Estado' },
   {
@@ -96,6 +101,7 @@ export const recienNacidoColumns: ColumnDef<RecienNacido>[] = [
 ]
 
 export const actividadColumns: ColumnDef<ActividadItem>[] = [
+  { accessorKey: 'id', header: 'ID' },
   {
     id: 'tipo',
     header: 'Tipo',

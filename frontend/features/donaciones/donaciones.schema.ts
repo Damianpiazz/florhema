@@ -58,7 +58,7 @@ export const crearDonacionInputSchema = z.object({
   peso: z.coerce.number().positive().min(50, 'El peso mínimo es 50 kg'),
   tensionArterial: z.string().regex(/^\d{2,3}\/\d{2,3}$/, 'Formato: sistólica/diastólica (ej. 120/80)'),
   hemoglobina: z.coerce.number().positive().min(12.5, 'La hemoglobina mínima es 12.5 g/dL'),
-  tipoDonacion: z.enum(['VOLUNTARIA', 'REPOSICION'], { required_error: 'El tipo de donación es requerido' }),
+   tipoDonacion: z.enum(['VOLUNTARIA', 'REPOSICION'], { message: 'El tipo de donación es requerido' }),
   reaccionAdversa: z.string().nullable().optional(),
   resultadoSerologia: serologiaInputSchema.nullable().optional(),
 })

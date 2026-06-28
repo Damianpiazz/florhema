@@ -1,6 +1,15 @@
 import type { $Enums } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 
+export async function create(data: { tipo: string; factorRh: string }) {
+  return prisma.grupoSanguineo.create({
+    data: {
+      tipo: data.tipo as $Enums.TipoABO,
+      factorRh: data.factorRh as $Enums.FactorRh,
+    }
+  })
+}
+
 export async function findAllActive() {
   return prisma.grupoSanguineo.findMany({
     where: { deletedAt: null },

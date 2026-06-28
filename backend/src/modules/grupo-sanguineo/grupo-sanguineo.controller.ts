@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 
 import {
+  crearGrupoSchema,
   actualizarGrupoSchema,
   grupoSanguineoListResponseSchema
 } from '@/modules/grupo-sanguineo/grupo-sanguineo.schema'
@@ -46,6 +47,70 @@ export async function list(_req: Request, res: Response, next: NextFunction) {
     const items = await grupoSanguineoService.listar()
     const validated = grupoSanguineoListResponseSchema.parse({ items })
     res.status(200).json(successResponse(validated))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @openapi
+ * /api/v1/grupos-sanguineos:
+ *   post:
+ *     tags:
+ *       - Grupos Sanguíneos
+ *     summary: Crear un nuevo grupo sanguíneo
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tipo
+ *               - factorRh
+ *             properties:
+ *               tipo:
+ *                 type: string
+ *                 enum: [A, B, AB, O]
+ *               factorRh:
+ *                 type: string
+ *                 enum: [POSITIVO, NEGATIVO]
+ *     responses:
+ *       201:
+ *         description: Grupo sanguíneo creado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     item:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         tipo:
+ *                           type: string
+ *                         factorRh:
+ *                           type: string
+ *       400:
+ *         description: Error de validación (Zod)
+ *       403:
+ *         description: Acción no permitida. Se requiere rol ADMIN
+ *       409:
+ *         description: Ya existe un grupo con esa combinación de tipo y factor Rh
+ */
+export async function create(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = crearGrupoSchema.parse(req.body)
+    const result = await grupoSanguineoService.crear(data)
+    res.status(201).json(successResponse(result))
   } catch (err) {
     next(err)
   }

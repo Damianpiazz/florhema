@@ -13,6 +13,7 @@ import {
   Check,
   X,
   Plus,
+  FileText,
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/auth-context'
 import {
@@ -23,6 +24,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -48,6 +50,7 @@ import {
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { formatDni } from '@/utils/formatters'
 import { PaginationBar } from '@/components/data-table/pagination-bar'
+import { donacionesService } from '@/features/donaciones/donaciones-service'
 import type { Donacion } from '@/features/donaciones/donaciones.schema'
 
 interface DonacionesTableProps {
@@ -128,6 +131,7 @@ export function DonacionesTable({
   }
 
   const columns: ColumnDef<Donacion>[] = useMemo(() => [
+    { accessorKey: 'id', header: 'ID' },
     {
       accessorKey: 'fecha',
       id: 'fecha',
@@ -189,6 +193,14 @@ export function DonacionesTable({
             <Pencil className="size-4" />
             <span className="sr-only">Editar</span>
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => donacionesService.descargarConstanciaDonacion(row.original.id)}
+          >
+            <FileText className="size-4" />
+            <span className="sr-only">Descargar constancia</span>
+          </Button>
           <Link href={`/personas/${row.original.donante.personaId}`}>
             <Button variant="ghost" size="icon">
               <Eye className="size-4" />
@@ -234,20 +246,20 @@ export function DonacionesTable({
             className="pl-8"
           />
         </div>
-        <Input
-          type="date"
-          value={filters.fechaDesde}
-          onChange={(e) => filters.onFechaDesdeChange(e.target.value)}
-          className="w-40"
-          placeholder="Fecha desde"
-        />
-        <Input
-          type="date"
-          value={filters.fechaHasta}
-          onChange={(e) => filters.onFechaHastaChange(e.target.value)}
-          className="w-40"
-          placeholder="Fecha hasta"
-        />
+        <div className="w-40">
+          <DatePicker
+            value={filters.fechaDesde}
+            onChange={filters.onFechaDesdeChange}
+            placeholder="Fecha desde"
+          />
+        </div>
+        <div className="w-40">
+          <DatePicker
+            value={filters.fechaHasta}
+            onChange={filters.onFechaHastaChange}
+            placeholder="Fecha hasta"
+          />
+        </div>
         <Select
           value={filters.tipoDonacion}
           onValueChange={filters.onTipoDonacionChange}
