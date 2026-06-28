@@ -212,6 +212,14 @@ export default function DashboardPage() {
   }
 
   // ── Transform data for charts ──
+  const donantesPorEstadoData = useMemo(() => {
+    if (!data?.donantesPorEstado) return []
+    return data.donantesPorEstado.map(d => ({
+      name: d.estado === 'VERDE' ? 'Apto (VERDE)' : d.estado === 'AMARILLO' ? 'Observado (AMARILLO)' : 'No Apto (ROJO)',
+      value: d.cantidad,
+    }))
+  }, [data])
+
   const donantesPorGrupoData = useMemo(() => {
     if (!data?.donantesPorGrupo) return []
     return data.donantesPorGrupo.map(d => ({
@@ -281,6 +289,11 @@ export default function DashboardPage() {
   const pieCoombsConfig = {
     positivo: { label: 'Positivo', color: 'var(--chart-4)' },
     negativo: { label: 'Negativo', color: 'var(--chart-3)' },
+  } satisfies ChartConfig
+  const pieEstadoConfig = {
+    VERDE: { label: 'Apto (VERDE)', color: 'var(--chart-3)' },
+    AMARILLO: { label: 'Observado (AMARILLO)', color: 'var(--chart-5)' },
+    ROJO: { label: 'No Apto (ROJO)', color: 'var(--chart-4)' },
   } satisfies ChartConfig
 
   return (
@@ -360,6 +373,14 @@ export default function DashboardPage() {
           config={barConfig}
           dataKey="unidades"
           xKey="name"
+        />
+        <PieChartCard
+          title="Donantes por Estado de Aptitud"
+          description="Semáforo de aptitud para donar"
+          data={donantesPorEstadoData}
+          loading={loading}
+          colors={['var(--chart-3)', 'var(--chart-5)', 'var(--chart-4)']}
+          config={pieEstadoConfig}
         />
         <PieChartCard
           title="Coombs Indirecto (Gestantes)"

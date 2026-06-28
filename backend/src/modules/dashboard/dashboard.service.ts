@@ -59,6 +59,18 @@ export async function getDashboardData(params: { fechaDesde?: string; fechaHasta
     porcentajeCompatibilidadExitosa = Math.round((exitosas / compatibilidades.length) * 100)
   }
 
+  // ── Donantes por estado de aptitud ──
+
+  const donantesPorEstadoRaw = await prisma.donante.groupBy({
+    by: ['semaforoAptitud'],
+    where: { deletedAt: null, createdAt: df },
+    _count: { id: true },
+  })
+  const donantesPorEstado = donantesPorEstadoRaw.map((d) => ({
+    estado: d.semaforoAptitud,
+    cantidad: d._count.id,
+  }))
+
   // ── Donantes por grupo sanguíneo ──
 
   const donantes = await prisma.donante.findMany({
@@ -165,6 +177,7 @@ export async function getDashboardData(params: { fechaDesde?: string; fechaHasta
     porcentajeCompatibilidadExitosa,
 
     // Charts
+    donantesPorEstado,
     donantesPorGrupo,
     evolucionDonaciones,
     donacionesAptasVsDescartadas,

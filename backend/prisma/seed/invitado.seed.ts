@@ -3,20 +3,21 @@ import { hashPassword } from '@/utils/password'
 
 export async function seedInvitado() {
   const email = 'invitado@hospital.com'
-  const existing = await prisma.user.findUnique({ where: { email } })
-  if (existing) {
-    console.log('  - Invitado ya existe, omitido.')
-    return
-  }
 
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { email },
+    create: {
       email,
+      password: await hashPassword('invitado123'),
+      name: 'Invitado',
+      role: 'INVITADO'
+    },
+    update: {
       password: await hashPassword('invitado123'),
       name: 'Invitado',
       role: 'INVITADO'
     }
   })
 
-  console.log('  - Invitado creado: invitado@hospital.com / invitado123')
+  console.log('  - Invitado asegurado: invitado@hospital.com / invitado123')
 }

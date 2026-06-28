@@ -10,6 +10,7 @@ export interface DashboardData {
   porcentajeCompatibilidadExitosa: number
 
   // Charts
+  donantesPorEstado: { estado: string; cantidad: number }[]
   donantesPorGrupo: { tipo: string; factorRh: string; cantidad: number }[]
   evolucionDonaciones: { mes: string; cantidad: number }[]
   donacionesAptasVsDescartadas: { aptas: number; descartadas: number }

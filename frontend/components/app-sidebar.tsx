@@ -2,7 +2,7 @@
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarFooter, useSidebar } from '@/components/ui/sidebar'
 import { usePathname } from 'next/navigation'
-import { ChevronsUpDown, LogOut, Users, Heart, Stethoscope, Baby, Droplets, Shield, Venus, Droplet, BarChart3, ScrollText, UserCog, LayoutDashboard, Search } from 'lucide-react'
+import { ChevronsUpDown, LogOut, Users, Heart, Stethoscope, Baby, Droplets, Shield, Venus, Droplet, BarChart3, ScrollText, UserCog, LayoutDashboard, Search, Trash2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/features/auth/auth-context'
@@ -47,6 +47,7 @@ const sections = [
     items: [
       { title: 'Usuarios', url: '/usuarios', icon: UserCog },
       { title: 'Auditoría', url: '/auditoria', icon: ScrollText },
+      { title: 'Papelera', url: '/admin/papelera', icon: Trash2 },
     ],
   },
   {

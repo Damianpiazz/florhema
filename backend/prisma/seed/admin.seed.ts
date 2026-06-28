@@ -3,20 +3,21 @@ import { hashPassword } from '@/utils/password'
 
 export async function seedAdmin() {
   const email = 'admin@hospital.com'
-  const existing = await prisma.user.findUnique({ where: { email } })
-  if (existing) {
-    console.log('  - Admin ya existe, omitido.')
-    return
-  }
 
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { email },
+    create: {
       email,
+      password: await hashPassword('admin123'),
+      name: 'Administrador',
+      role: 'ADMIN'
+    },
+    update: {
       password: await hashPassword('admin123'),
       name: 'Administrador',
       role: 'ADMIN'
     }
   })
 
-  console.log('  - Admin creado: admin@hospital.com / admin123')
+  console.log('  - Admin asegurado: admin@hospital.com / admin123')
 }

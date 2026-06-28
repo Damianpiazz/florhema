@@ -1,3 +1,7 @@
+// dotenv must load BEFORE instrumentation so process.env is populated
+// when the OTEL SDK checks OTEL_ENABLED and other env vars.
+import 'dotenv/config'
+
 // IMPORTANT: instrumentation MUST be imported before any other module so that
 // auto-instrumentations can patch modules (Express, etc.) on load.
 import './instrumentation.js'
