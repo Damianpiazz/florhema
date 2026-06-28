@@ -1,0 +1,34 @@
+# syntax=docker/dockerfile:1
+# Dockerfile.test — ejecución de tests y E2E
+# ============================================================
+# Single stage con usuario no-root. Instala todo, genera
+# Prisma client, y corre vitest. Para E2E se espera que
+# docker-compose.test.yml monte la base de datos de prueba.
+# ============================================================
+
+FROM node:22-alpine
+
+RUN apk add --no-cache dumb-init ca-certificates tzdata && \
+  addgroup -S appgroup && \
+  adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copiar dependencias e instalarlas
+COPY package.json package-lock.json* ./
+COPY prisma/ ./prisma/
+RUN npm ci --ignore-scripts && \
+  npx prisma generate && \
+  npm cache clean --force
+
+# Copiar el resto del código
+COPY . .
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+EXPOSE 4000
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["npm", "test"]

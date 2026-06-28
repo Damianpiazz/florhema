@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+# Dockerfile.dev — desarrollo con hot-reload
+# ============================================================
+# Single stage: prioriza velocidad y comodidad sobre seguridad.
+# Los source mounts (`src/`, `prisma/`) vienen del host via
+# docker-compose.dev.yml — no se copian en la imagen.
+# ============================================================
+
+FROM node:22-alpine
+
+RUN apk add --no-cache dumb-init
+
+WORKDIR /app
+
+# Copiar solo lo necesario para instalar dependencias y
+# generar el cliente de Prisma
+COPY package.json package-lock.json* ./
+COPY prisma/ ./prisma/
+
+RUN npm ci --ignore-scripts && \
+  npx prisma generate && \
+  npm cache clean --force
+
+EXPOSE 4000
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["npm", "run", "dev"]

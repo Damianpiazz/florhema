@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+# Dockerfile.dev — frontend con hot-reload (Next.js dev)
+# ============================================================
+# Single stage. Corre `next dev` y expone en el puerto 3000.
+# El código fuente se monta por volumen desde el host.
+# ============================================================
+
+FROM node:22-alpine
+
+RUN apk add --no-cache dumb-init
+
+WORKDIR /app
+
+# Copiar solo lo necesario para instalar dependencias
+COPY package.json package-lock.json* ./
+COPY .npmrc* ./
+
+RUN npm ci --ignore-scripts && npm cache clean --force
+
+EXPOSE 3000
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["npm", "run", "dev"]
