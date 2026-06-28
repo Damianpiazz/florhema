@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import {
   AlertDialog,
@@ -9,7 +10,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction,
 } from '@/components/ui/alert-dialog'
 
 interface PacienteDeleteDialogProps {
@@ -35,13 +35,9 @@ export function PacienteDeleteDialog({ deleteId, onClose, onConfirm, error, dele
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={onConfirm}
-            disabled={deleting}
-          >
+          <Button onClick={onConfirm} disabled={deleting}>
             {deleting ? 'Eliminando...' : 'Eliminar'}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

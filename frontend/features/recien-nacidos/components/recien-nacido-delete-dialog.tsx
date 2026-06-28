@@ -1,9 +1,9 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -39,9 +39,9 @@ export function RecienNacidoDeleteDialog({
         <ErrorAlert message={error} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} disabled={deleting}>
+          <Button onClick={onConfirm} disabled={deleting}>
             {deleting ? 'Eliminando...' : 'Eliminar'}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
