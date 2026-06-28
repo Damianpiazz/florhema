@@ -8,13 +8,12 @@ services:
   florhema-backend:
     build:
       context: ./backend
-      target: test
+      dockerfile: Dockerfile.test
     container_name: florhema-backend-test
     env_file:
       - ./backend/.env
     environment:
       DATABASE_URL: "postgresql://florhema_user:florhema_pass@florhema-postgres:5432/florhema_db_test"
-      OTEL_COLLECTOR_HOST: otel-collector
       NODE_ENV: test
       LOG_LEVEL: silent
     volumes:
@@ -52,20 +51,6 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
-    networks:
-      - florhema-network
-
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: florhema-otel-collector-test
-    ports:
-      - "4319:4318"
-      - "9465:9464"
-    volumes:
-      - ./otel-collector/config.yml:/etc/otel-collector/config.yml:ro
-    command: ["--config=/etc/otel-collector/config.yml"]
-    profiles:
-      - with-otel
     networks:
       - florhema-network
 
