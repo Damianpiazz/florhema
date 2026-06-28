@@ -17,6 +17,7 @@ import reporteRoutes from '../modules/reporte/reporte.routes'
 import usuariosRoutes from '../modules/usuarios/usuarios.routes'
 import auditRoutes from '../modules/audit/audit.routes'
 import dashboardRoutes from '../modules/dashboard/dashboard.routes'
+import trashRoutes from '../modules/trash/trash.routes'
 
 const apiRouter = Router()
 
@@ -45,5 +46,6 @@ apiRouter.use('/reportes', reporteRoutes)
 apiRouter.use('/reportes', dashboardRoutes)
 apiRouter.use('/usuarios', usuariosRoutes)
 apiRouter.use('/audit', auditRoutes)
+apiRouter.use('/admin', trashRoutes)
 
 export default apiRouter
